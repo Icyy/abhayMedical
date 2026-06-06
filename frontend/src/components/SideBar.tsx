@@ -10,15 +10,15 @@ const navLinks = [
 
 const SideBar = () => {
   return (
-    <div className="w-64 h-screen bg-gray-900 flex flex-col p-4">
+    <div className="w-64 h-screen bg-green-800 flex flex-col p-4">
       {navLinks.map((link) => (
         <NavLink
           key={link.label}
           to={link.to}
           className={({ isActive }) =>
             isActive
-              ? "block p-3 rounded-lg bg-gray-700 text-white"
-              : "block p-3 rounded-lg text-gray-300 hover:text-white"
+              ? "block p-3 rounded-lg bg-green-700 text-black"
+              : "block p-3 rounded-lg text-gray-300 hover:text-black"
           }
         >
           {link.label}
