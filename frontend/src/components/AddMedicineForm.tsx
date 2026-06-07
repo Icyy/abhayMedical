@@ -6,42 +6,46 @@ interface AddMedicineFormProps {
 }
 
 const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
-  const [name, setName] = useState("");
-  const [stock, setStock] = useState(0);
-  const [unit, setUnit] = useState("strips");
-  const [price, setPrice] = useState(0);
-  const [batchNumber, setBatchNumber] = useState("");
-  const [manufacturingDate, setManufacturingDate] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [status, setStatus] = useState<Medicine["status"]>("ok");
+  const [formData, setFormData] = useState({
+    name: "",
+    stock: 0,
+    unit: "strips",
+    price: 0,
+    batchNumber: "",
+    manufacturingDate: "",
+    expiryDate: "",
+    status: "ok" as Medicine["status"],
+  });
 
   const handleSubmit = () => {
-    if (!name || stock === 0) {
+    if (!formData.name || formData.stock === 0) {
       alert("Please fill in all fields");
       return;
     }
 
     const newMedicine: Medicine = {
-      name,
-      stock,
-      unit,
-      price,
-      batchNumber: batchNumber || `BX${Date.now()}`,
-      manufacturingDate: new Date(manufacturingDate),
-      expiryDate: new Date(expiryDate),
-      status,
+      name: formData.name,
+      stock: formData.stock,
+      unit: formData.unit,
+      price: formData.price,
+      batchNumber: formData.batchNumber || `BX${Date.now()}`,
+      manufacturingDate: new Date(formData.manufacturingDate),
+      expiryDate: new Date(formData.expiryDate),
+      status: formData.status,
     };
 
     onSubmit(newMedicine);
 
-    setName("");
-    setStock(0);
-    setUnit("strips");
-    setPrice(0);
-    setBatchNumber("");
-    setManufacturingDate("");
-    setExpiryDate("");
-    setStatus("ok");
+    setFormData({
+      name: "",
+      stock: 0,
+      unit: "strips",
+      price: 0,
+      batchNumber: "",
+      manufacturingDate: "",
+      expiryDate: "",
+      status: "ok",
+    });
   };
 
   return (
@@ -52,8 +56,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Medicine name</label>
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="e.g. Paracetamol 500mg"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
@@ -62,8 +66,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Batch number</label>
           <input
-            value={batchNumber}
-            onChange={(e) => setBatchNumber(e.target.value)}
+            value={formData.batchNumber}
+            onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
             placeholder="e.g. BX4821"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
@@ -73,8 +77,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Stock quantity</label>
           <input
             type="number"
-            value={stock}
-            onChange={(e) => setStock(Number(e.target.value))}
+            value={formData.stock}
+            onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
@@ -82,8 +86,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Unit</label>
           <select
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
+            value={formData.unit}
+            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
             <option value="strips">Strips</option>
@@ -98,8 +102,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Price (₹)</label>
           <input
             type="number"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
+            value={formData.price}
+            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
@@ -107,8 +111,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Status</label>
           <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Medicine["status"])}
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as Medicine["status"] })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
             <option value="ok">OK</option>
@@ -121,8 +125,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Manufacturing date</label>
           <input
             type="date"
-            value={manufacturingDate}
-            onChange={(e) => setManufacturingDate(e.target.value)}
+            value={formData.manufacturingDate}
+            onChange={(e) => setFormData({ ...formData, manufacturingDate: e.target.value })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
@@ -131,8 +135,8 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Expiry date</label>
           <input
             type="date"
-            value={expiryDate}
-            onChange={(e) => setExpiryDate(e.target.value)}
+            value={formData.expiryDate}
+            onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
