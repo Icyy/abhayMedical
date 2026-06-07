@@ -18,11 +18,11 @@ const PrescriptionsPage = () => {
           type="search"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Search customers..."
+          placeholder="Search prescriptions..."
           className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400 mb-4 w-full"
         />
         {filteredPrescription.length === 0 ? (
-          <p className="text-sm text-gray-400">No customers added yet</p>
+          <p className="text-sm text-gray-400">No prescriptions added yet</p>
         ) : (
           <table className="w-full">
             <thead>
