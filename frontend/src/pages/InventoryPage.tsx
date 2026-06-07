@@ -7,6 +7,7 @@ import { useState } from "react";
 const InventoryPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
   const addMedicine = useInventoryStore((state) => state.addMedicine);
+  const removeMedicine = useInventoryStore((state)=> state.removeMedicine)
   const [name, setName] = useState("");
   const filteredMedicines = medicines.filter((med) =>
     med.name.toLowerCase().includes(name.toLowerCase()),
@@ -27,7 +28,7 @@ const InventoryPage = () => {
         placeholder="Search medicines..."
         className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400 mb-4 w-full"
       />
-      <InventoryTable medicines={filteredMedicines} />
+      <InventoryTable medicines={filteredMedicines} removeMedicine={removeMedicine} />
     </div>
   );
 };

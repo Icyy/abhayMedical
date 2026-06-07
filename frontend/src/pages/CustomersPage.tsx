@@ -4,19 +4,22 @@ import { useCustomerStore } from "../store/customerStore";
 
 const CustomersPage = () => {
   const customer = useCustomerStore((state) => state.customers);
-  const [name, setName] = useState("")
-  const filteredCustomer = customer.filter((cust)=> cust.name.toLowerCase().includes(name.toLowerCase()),)
+  const removeCustomer = useCustomerStore((state) => state.removeCustomer);
+  const [name, setName] = useState("");
+  const filteredCustomer = customer.filter((cust) =>
+    cust.name.toLowerCase().includes(name.toLowerCase()),
+  );
   return (
     <div className="p-6">
       <AddCustomersForm />
       <div>
         <input
-        type="search"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Search customers..."
-        className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400 mb-4 w-full"
-      />
+          type="search"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Search customers..."
+          className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400 mb-4 w-full"
+        />
         {filteredCustomer.length === 0 ? (
           <p className="text-sm text-gray-400">No customers added yet</p>
         ) : (
@@ -43,6 +46,9 @@ const CustomersPage = () => {
                     <th className="text-left p-3 text-sm text-gray-500">
                       Total Spend
                     </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Remove Customer
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -57,6 +63,14 @@ const CustomersPage = () => {
                       <td className="p-3 text-sm">{cust.loyaltyPoints}</td>
                       <td className="p-3 text-sm">{cust.notes}</td>
                       <td className="p-3 text-sm">{cust.totalSpend}</td>
+                      <td className="p-3 text-sm">
+                        <button
+                          onClick={() => removeCustomer(cust.customerId)}
+                          className="text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-md transition-colors text-xs font-medium"
+                        >
+                          🗑️ Remove
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

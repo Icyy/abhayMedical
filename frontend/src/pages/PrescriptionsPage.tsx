@@ -5,6 +5,7 @@ import { getPresStatusClass } from "../utils/statusHelpers";
 
 const PrescriptionsPage = () => {
   const prescriptions = usePrescriptionStore((state) => state.prescriptions);
+  const removePrescription = usePrescriptionStore((state)=>state.removePrescription)
   const [name, setName] = useState("");
   const filteredPrescription = prescriptions.filter((cust) =>
     cust.name.toLowerCase().includes(name.toLowerCase()),
@@ -36,6 +37,7 @@ const PrescriptionsPage = () => {
                 <th className="text-left p-3 text-sm text-green-700">Doctor</th>
                 <th className="text-left p-3 text-sm text-green-700">Date</th>
                 <th className="text-left p-3 text-sm text-green-700">Status</th>
+                <th className="text-left p-3 text-sm text-green-700">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -58,6 +60,14 @@ const PrescriptionsPage = () => {
                     >
                       {med.status}
                     </span>
+                  </td>
+                  <td className="p-3 text-sm">
+                    <button
+                      onClick={() => removePrescription(med.prescriptionId)}
+                      className="text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-md transition-colors text-xs font-medium"
+                    >
+                      🗑️ Remove
+                    </button>
                   </td>
                 </tr>
               ))}
