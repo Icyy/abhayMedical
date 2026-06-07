@@ -3,6 +3,7 @@ import { getStatusClass } from "../utils/statusHelpers";
 
 const ReordersPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
+  const updateMeds = useInventoryStore((state=>state.updateMedicineStatus))
   const reorders = medicines.filter((med) => med.status === "critical" || med.status==="low");
 
   return (
@@ -31,7 +32,7 @@ const ReordersPage = () => {
                 </span>
               </td>
               <td className="p-3 text-sm">
-                <button className="bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-medium hover:bg-green-100">
+                <button onClick={()=>updateMeds(med.batchNumber,'ok')} className="bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-medium hover:bg-green-100">
                   Mark as Reordered
                 </button>
               </td>
