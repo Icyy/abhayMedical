@@ -1,16 +1,12 @@
 import { useInventoryStore } from "../store/inventoryStore";
-import type { Medicine } from "../types/inventory";
+import { getStatusClass } from "../utils/statusHelpers";
 
 const ReordersPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
-  const reorders = medicines.filter((med) => med.status === "critical"|| med.status==='low');
-  const getStatusClass = (status: Medicine["status"]) => {
-    if (status === "critical") return "bg-red-100 text-red-800";
-    if (status === "low") return "bg-yellow-100 text-yellow-800";
-    return "bg-green-100 text-green-800";
-  };
+  const reorders = medicines.filter((med) => med.status === "critical" || med.status==="low");
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200">

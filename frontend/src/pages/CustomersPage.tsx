@@ -1,13 +1,23 @@
+import { useState } from "react";
 import AddCustomersForm from "../components/AddCustomersForm";
 import { useCustomerStore } from "../store/customerStore";
 
 const CustomersPage = () => {
   const customer = useCustomerStore((state) => state.customers);
+  const [name, setName] = useState("")
+  const filteredCustomer = customer.filter((cust)=> cust.name.toLowerCase().includes(name.toLowerCase()),)
   return (
-    <div>
+    <div className="p-6">
       <AddCustomersForm />
       <div>
-        {customer.length === 0 ? (
+        <input
+        type="search"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Search customers..."
+        className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400 mb-4 w-full"
+      />
+        {filteredCustomer.length === 0 ? (
           <p className="text-sm text-gray-400">No customers added yet</p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -36,7 +46,7 @@ const CustomersPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {customer.map((cust) => (
+                  {filteredCustomer.map((cust) => (
                     <tr
                       className="border-b border-gray-200"
                       key={cust.customerId}
