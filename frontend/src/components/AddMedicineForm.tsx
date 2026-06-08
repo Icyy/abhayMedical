@@ -1,51 +1,51 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import type { Medicine } from "../types/inventory";
 
 interface AddMedicineFormProps {
   onSubmit: (medicine: Medicine) => void;
 }
 
+type MedicineFormData = {
+  name: string;
+  batchNumber: string;
+  stock: number;
+  unit: string;
+  price: number;
+  status: "ok" | "low" | "critical";
+  manufacturingDate: string;
+  expiryDate: string;
+};
+
+const generateBatchNumber = () => `BX${Date.now()}`;
+
 const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    stock: 0,
-    unit: "strips",
-    price: 0,
-    batchNumber: "",
-    manufacturingDate: "",
-    expiryDate: "",
-    status: "ok" as Medicine["status"],
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<MedicineFormData>({
+    defaultValues: {
+      unit: "strips",
+      status: "ok",
+      stock: 0,
+      price: 0,
+    },
   });
 
-  const handleSubmit = () => {
-    if (!formData.name || formData.stock === 0) {
-      alert("Please fill in all fields");
-      return;
-    }
-
+  const onFormSubmit = (data: MedicineFormData) => {
     const newMedicine: Medicine = {
-      name: formData.name,
-      stock: formData.stock,
-      unit: formData.unit,
-      price: formData.price,
-      batchNumber: formData.batchNumber || `BX${Date.now()}`,
-      manufacturingDate: new Date(formData.manufacturingDate),
-      expiryDate: new Date(formData.expiryDate),
-      status: formData.status,
+      name: data.name,
+      stock: data.stock,
+      unit: data.unit,
+      price: data.price,
+      batchNumber: data.batchNumber || generateBatchNumber(),
+      manufacturingDate: new Date(data.manufacturingDate),
+      expiryDate: new Date(data.expiryDate),
+      status: data.status,
     };
-
     onSubmit(newMedicine);
-
-    setFormData({
-      name: "",
-      stock: 0,
-      unit: "strips",
-      price: 0,
-      batchNumber: "",
-      manufacturingDate: "",
-      expiryDate: "",
-      status: "ok",
-    });
+    reset();
   };
 
   return (
@@ -56,18 +56,17 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Medicine name</label>
           <input
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            {...register("name", { required: "Medicine name is required" })}
             placeholder="e.g. Paracetamol 500mg"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Batch number</label>
           <input
-            value={formData.batchNumber}
-            onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
+            {...register("batchNumber")}
             placeholder="e.g. BX4821"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
@@ -77,17 +76,19 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Stock quantity</label>
           <input
             type="number"
-            value={formData.stock}
-            onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+            {...register("stock", {
+              required: "Stock is required",
+              min: { value: 1, message: "Stock must be at least 1" }
+            })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Unit</label>
           <select
-            value={formData.unit}
-            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+            {...register("unit")}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
             <option value="strips">Strips</option>
@@ -102,17 +103,19 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Price (₹)</label>
           <input
             type="number"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+            {...register("price", {
+              required: "Price is required",
+              min: { value: 1, message: "Price must be at least 1" }
+            })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Status</label>
           <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as Medicine["status"] })}
+            {...register("status")}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
             <option value="ok">OK</option>
@@ -125,25 +128,25 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Manufacturing date</label>
           <input
             type="date"
-            value={formData.manufacturingDate}
-            onChange={(e) => setFormData({ ...formData, manufacturingDate: e.target.value })}
+            {...register("manufacturingDate", { required: "Manufacturing date is required" })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.manufacturingDate && <p className="text-red-500 text-xs mt-1">{errors.manufacturingDate.message}</p>}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Expiry date</label>
           <input
             type="date"
-            value={formData.expiryDate}
-            onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+            {...register("expiryDate", { required: "Expiry date is required" })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.expiryDate && <p className="text-red-500 text-xs mt-1">{errors.expiryDate.message}</p>}
         </div>
       </div>
 
       <button
-        onClick={handleSubmit}
+        onClick={handleSubmit(onFormSubmit)}
         className="mt-6 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors"
       >
         Add Medicine
