@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { usePrescriptionStore } from "../store/prescriptionStore";
 import type { Prescription } from "../types/prescription";
 
@@ -7,29 +8,40 @@ interface PrescribedMedicine {
   quantity: number;
 }
 
+type PrescriptionFormData = {
+  name: string;
+  phoneNumber: string;
+  doctorName: string;
+  notes: string;
+  discount: number;
+}
+
 const AddPrescriptionForm = () => {
   const addPrescription = usePrescriptionStore((state) => state.addPrescription);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    phoneNumber: "",
-    doctorName: "",
-    notes: "",
-    discount: 0,
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm<PrescriptionFormData>({
+    defaultValues: {
+      discount: 0,
+      notes: "",
+      doctorName: "",
+    }
   });
 
   const [prescribedMedicines, setPrescribedMedicines] = useState<PrescribedMedicine[]>([]);
-
-  const [currentMedicine, setCurrentMedicine] = useState({
-    name: "",
-    quantity: 0,
-  });
+  const [currentMedicine, setCurrentMedicine] = useState({ name: "", quantity: 0 });
+  const [medicineError, setMedicineError] = useState("");
 
   const handleAddMedicine = () => {
     if (!currentMedicine.name || currentMedicine.quantity === 0) {
-      alert("Please enter medicine name and quantity");
+      setMedicineError("Please enter medicine name and quantity");
       return;
     }
+    setMedicineError("");
     setPrescribedMedicines([...prescribedMedicines, currentMedicine]);
     setCurrentMedicine({ name: "", quantity: 0 });
   };
@@ -38,23 +50,19 @@ const AddPrescriptionForm = () => {
     setPrescribedMedicines(prescribedMedicines.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    if (!formData.name || !formData.phoneNumber) {
-      alert("Please fill in patient name and phone number");
-      return;
-    }
+  const onFormSubmit = (data: PrescriptionFormData) => {
     if (prescribedMedicines.length === 0) {
-      alert("Please add at least one medicine");
+      setMedicineError("Please add at least one medicine");
       return;
     }
 
     const newPrescription: Prescription = {
       prescriptionId: `RX${Date.now()}`,
-      name: formData.name,
-      phoneNumber: formData.phoneNumber,
-      doctorName: formData.doctorName,
-      notes: formData.notes,
-      discount: formData.discount,
+      name: data.name,
+      phoneNumber: data.phoneNumber,
+      doctorName: data.doctorName,
+      notes: data.notes,
+      discount: data.discount,
       medicines: prescribedMedicines,
       subTotal: 0,
       total: 0,
@@ -63,9 +71,9 @@ const AddPrescriptionForm = () => {
     };
 
     addPrescription(newPrescription);
-
-    setFormData({ name: "", phoneNumber: "", doctorName: "", notes: "", discount: 0 });
+    reset();
     setPrescribedMedicines([]);
+    setMedicineError("");
   };
 
   return (
@@ -76,44 +84,52 @@ const AddPrescriptionForm = () => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Patient name</label>
           <input
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            {...register("name", { required: "Patient name is required" })}
             placeholder="e.g. Ramesh Shah"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
         </div>
+
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Phone number</label>
           <input
-            value={formData.phoneNumber}
-            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+            {...register("phoneNumber", {
+              required: "Phone number is required",
+              pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" }
+            })}
             placeholder="e.g. 9876543210"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
         </div>
+
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Doctor name</label>
           <input
-            value={formData.doctorName}
-            onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
+            {...register("doctorName")}
             placeholder="e.g. Dr. Mehta"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
+
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Discount %</label>
           <input
             type="number"
-            value={formData.discount}
-            onChange={(e) => setFormData({ ...formData, discount: Number(e.target.value) })}
+            {...register("discount", {
+              min: { value: 0, message: "Discount cannot be negative" },
+              max: { value: 100, message: "Discount cannot exceed 100%" }
+            })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
+          {errors.discount && <p className="text-red-500 text-xs mt-1">{errors.discount.message}</p>}
         </div>
+
         <div className="flex flex-col gap-1 col-span-2">
           <label className="text-sm text-gray-500">Notes</label>
           <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            {...register("notes")}
             placeholder="Any special instructions..."
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
@@ -144,6 +160,8 @@ const AddPrescriptionForm = () => {
           </button>
         </div>
 
+        {medicineError && <p className="text-red-500 text-xs mb-2">{medicineError}</p>}
+
         {prescribedMedicines.length === 0 ? (
           <p className="text-sm text-gray-400">No medicines added yet</p>
         ) : (
@@ -165,7 +183,7 @@ const AddPrescriptionForm = () => {
       </div>
 
       <button
-        onClick={handleSubmit}
+        onClick={handleSubmit(onFormSubmit)}
         className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors"
       >
         Save Prescription
