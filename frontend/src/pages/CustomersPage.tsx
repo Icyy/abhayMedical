@@ -11,6 +11,7 @@ const CustomersPage = () => {
   );
   return (
     <div className="p-6">
+      <h1 className="text-xl font-medium text-gray-800 mb-4">Customers</h1>
       <AddCustomersForm />
       <div>
         <input
@@ -24,39 +25,22 @@ const CustomersPage = () => {
           <p className="text-sm text-gray-400">No customers added yet</p>
         ) : (
           <div className="flex flex-col gap-2">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Name
-                    </th>
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Email
-                    </th>
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Phone Number
-                    </th>
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Loyalty Points
-                    </th>
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Notes
-                    </th>
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Total Spend
-                    </th>
-                    <th className="text-left p-3 text-sm text-gray-500">
-                      Remove Customer
-                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">Name</th>
+                    <th className="text-left p-3 text-sm text-gray-500">Email</th>
+                    <th className="text-left p-3 text-sm text-gray-500">Phone Number</th>
+                    <th className="text-left p-3 text-sm text-gray-500">Loyalty Points</th>
+                    <th className="text-left p-3 text-sm text-gray-500">Notes</th>
+                    <th className="text-left p-3 text-sm text-gray-500">Total Spend</th>
+                    <th className="text-left p-3 text-sm text-gray-500">Remove Customer</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCustomer.map((cust) => (
-                    <tr
-                      className="border-b border-gray-200"
-                      key={cust.customerId}
-                    >
+                    <tr className="border-b border-gray-200" key={cust.customerId}>
                       <td className="p-3 text-sm">{cust.name}</td>
                       <td className="p-3 text-sm">{cust.email}</td>
                       <td className="p-3 text-sm">{cust.phoneNumber}</td>

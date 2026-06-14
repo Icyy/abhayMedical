@@ -6,14 +6,13 @@ import CustomersPage from "./pages/CustomersPage";
 import ReordersPage from "./pages/ReordersPage";
 import SideBar from "./components/SideBar";
 
-
 const App = () => {
   return (
-    <>
-      <BrowserRouter>
-      <h1 className="font-bold text-amber-50 p-3 bg-green-700">Abhay Medical</h1>
-        <div className="flex">
-          <SideBar />
+    <BrowserRouter>
+      <div className="flex">
+        <SideBar />
+        <div className="flex-1 pb-20 md:pb-0">
+          <h1 className="font-bold text-white p-3 bg-green-700">Abhay Medical</h1>
           <Routes>
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/" element={<DashboardPage />} />
@@ -22,8 +21,8 @@ const App = () => {
             <Route path="/reorders" element={<ReordersPage />} />
           </Routes>
         </div>
-      </BrowserRouter>
-    </>
+      </div>
+    </BrowserRouter>
   );
 };
 
