@@ -11,7 +11,7 @@ const App = () => {
     <BrowserRouter>
       <div className="flex">
         <SideBar />
-        <div className="flex-1 pb-20 md:pb-0">
+        <div className="flex-1 pb-20 md:pb-0 min-w-0">
           <h1 className="font-bold text-white p-3 bg-green-700">Abhay Medical</h1>
           <Routes>
             <Route path="/inventory" element={<InventoryPage />} />

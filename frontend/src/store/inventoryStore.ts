@@ -51,6 +51,7 @@ interface InventoryStore {
   setMedicines: (medicines: Medicine[]) => void
   removeMedicine: (batchNumber: string) => void
   updateMedicineStatus: (batchNumber: string, status: Medicine['status']) => void
+  reduceStock: (name: string, quantity: number) => void
   
 }
 
@@ -66,6 +67,13 @@ export const useInventoryStore = create<InventoryStore>((set) => ({
 updateMedicineStatus: (batchNumber: string, status: Medicine['status']) => set((state) => ({
   medicines: state.medicines.map((med) => 
     med.batchNumber === batchNumber ? { ...med, status } : med
+  )
+})),
+reduceStock: (name: string, quantity: number) => set((state) => ({
+  medicines: state.medicines.map((med) =>
+    med.name === name
+      ? { ...med, stock: Math.max(0, med.stock - quantity) }
+      : med
   )
 }))
 }))

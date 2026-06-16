@@ -43,7 +43,7 @@ const DashboardPage = () => {
     <div className="p-6">
       <h1 className="text-xl font-medium text-gray-800 mb-6">Dashboard</h1>
 
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {metrics.map((metric) => (
           <div
             key={metric.label}
@@ -57,7 +57,7 @@ const DashboardPage = () => {
         ))}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 overflow-x-auto">
         <h2 className="text-sm font-medium text-gray-700 mb-4">
           Critical & Low Stock Medicines
         </h2>

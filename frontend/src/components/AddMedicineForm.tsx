@@ -52,7 +52,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
     <div className="bg-white rounded-lg border border-green-100 p-6 mb-6">
       <h2 className="text-lg font-medium text-green-800 mb-4">Add Medicine</h2>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Medicine name</label>
           <input

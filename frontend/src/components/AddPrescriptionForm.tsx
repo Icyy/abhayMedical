@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { usePrescriptionStore } from "../store/prescriptionStore";
 import type { Prescription } from "../types/prescription";
+import { useInventoryStore } from "../store/inventoryStore";
 
 interface PrescribedMedicine {
   name: string;
@@ -14,26 +15,35 @@ type PrescriptionFormData = {
   doctorName: string;
   notes: string;
   discount: number;
-}
+};
 
 const AddPrescriptionForm = () => {
-  const addPrescription = usePrescriptionStore((state) => state.addPrescription);
+  const addPrescription = usePrescriptionStore(
+    (state) => state.addPrescription,
+  );
+  const reduceStock = useInventoryStore((state) => state.reduceStock);
+  const medicines = useInventoryStore((state) => state.medicines);
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    formState: { errors },
   } = useForm<PrescriptionFormData>({
     defaultValues: {
       discount: 0,
       notes: "",
       doctorName: "",
-    }
+    },
   });
 
-  const [prescribedMedicines, setPrescribedMedicines] = useState<PrescribedMedicine[]>([]);
-  const [currentMedicine, setCurrentMedicine] = useState({ name: "", quantity: 0 });
+  const [prescribedMedicines, setPrescribedMedicines] = useState<
+    PrescribedMedicine[]
+  >([]);
+  const [currentMedicine, setCurrentMedicine] = useState({
+    name: "",
+    quantity: 0,
+  });
   const [medicineError, setMedicineError] = useState("");
 
   const handleAddMedicine = () => {
@@ -56,6 +66,12 @@ const AddPrescriptionForm = () => {
       return;
     }
 
+    const subTotal = prescribedMedicines.reduce((total, med) => {
+      const inventoryMed = medicines.find((m) => m.name === med.name);
+      const price = inventoryMed ? inventoryMed.price : 0;
+      return total + price * med.quantity;
+    }, 0);
+    const total = subTotal - (subTotal * data.discount) / 100;
     const newPrescription: Prescription = {
       prescriptionId: `RX${Date.now()}`,
       name: data.name,
@@ -64,23 +80,29 @@ const AddPrescriptionForm = () => {
       notes: data.notes,
       discount: data.discount,
       medicines: prescribedMedicines,
-      subTotal: 0,
-      total: 0,
+      subTotal: subTotal,
+      total: total,
       status: "pending",
       date: new Date(),
     };
 
     addPrescription(newPrescription);
+    prescribedMedicines.forEach((med) => {
+      reduceStock(med.name, med.quantity);
+    });
     reset();
+    console.log(subTotal, total)
     setPrescribedMedicines([]);
     setMedicineError("");
   };
 
   return (
     <div className="bg-white rounded-lg border border-green-100 p-6 mb-6">
-      <h2 className="text-lg font-medium text-green-800 mb-4">New Prescription</h2>
+      <h2 className="text-lg font-medium text-green-800 mb-4">
+        New Prescription
+      </h2>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Patient name</label>
           <input
@@ -88,7 +110,9 @@ const AddPrescriptionForm = () => {
             placeholder="e.g. Ramesh Shah"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -96,12 +120,19 @@ const AddPrescriptionForm = () => {
           <input
             {...register("phoneNumber", {
               required: "Phone number is required",
-              pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" }
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: "Enter a valid 10 digit number",
+              },
             })}
             placeholder="e.g. 9876543210"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.phoneNumber.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -119,11 +150,15 @@ const AddPrescriptionForm = () => {
             type="number"
             {...register("discount", {
               min: { value: 0, message: "Discount cannot be negative" },
-              max: { value: 100, message: "Discount cannot exceed 100%" }
+              max: { value: 100, message: "Discount cannot exceed 100%" },
             })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.discount && <p className="text-red-500 text-xs mt-1">{errors.discount.message}</p>}
+          {errors.discount && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.discount.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1 col-span-2">
@@ -138,17 +173,24 @@ const AddPrescriptionForm = () => {
 
       <div className="border border-gray-100 rounded-lg p-4 mb-4">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Medicines</h3>
-        <div className="flex gap-2 mb-3">
+        <div className="flex-col sm:flex-row gap-2 mb-3">
           <input
             value={currentMedicine.name}
-            onChange={(e) => setCurrentMedicine({ ...currentMedicine, name: e.target.value })}
+            onChange={(e) =>
+              setCurrentMedicine({ ...currentMedicine, name: e.target.value })
+            }
             placeholder="Medicine name"
             className="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
           <input
             type="number"
             value={currentMedicine.quantity}
-            onChange={(e) => setCurrentMedicine({ ...currentMedicine, quantity: Number(e.target.value) })}
+            onChange={(e) =>
+              setCurrentMedicine({
+                ...currentMedicine,
+                quantity: Number(e.target.value),
+              })
+            }
             placeholder="Qty"
             className="w-24 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
@@ -160,16 +202,23 @@ const AddPrescriptionForm = () => {
           </button>
         </div>
 
-        {medicineError && <p className="text-red-500 text-xs mb-2">{medicineError}</p>}
+        {medicineError && (
+          <p className="text-red-500 text-xs mb-2">{medicineError}</p>
+        )}
 
         {prescribedMedicines.length === 0 ? (
           <p className="text-sm text-gray-400">No medicines added yet</p>
         ) : (
           <div className="flex flex-col gap-2">
             {prescribedMedicines.map((med, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
+              <div
+                key={index}
+                className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
+              >
                 <span className="text-sm">{med.name}</span>
-                <span className="text-sm text-gray-500">Qty: {med.quantity}</span>
+                <span className="text-sm text-gray-500">
+                  Qty: {med.quantity}
+                </span>
                 <button
                   onClick={() => handleRemoveMedicine(index)}
                   className="text-red-400 hover:text-red-600 text-xs"
@@ -184,7 +233,7 @@ const AddPrescriptionForm = () => {
 
       <button
         onClick={handleSubmit(onFormSubmit)}
-        className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors"
+        className="mt-6 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors"
       >
         Save Prescription
       </button>

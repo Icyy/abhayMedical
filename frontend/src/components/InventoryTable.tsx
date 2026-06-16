@@ -11,7 +11,7 @@ export const InventoryTable = ({
   removeMedicine,
 }: InventoryTableProps) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200">

@@ -14,7 +14,7 @@ const ReordersPage = () => {
           <p className="text-sm text-gray-400">All medicines are well stocked! 🎉</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 overflow-x-auto">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
