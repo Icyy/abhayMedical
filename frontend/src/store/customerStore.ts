@@ -6,6 +6,7 @@ interface CustomerStore {
   addCustomer: (customer: Customer) => void;
   setCustomers: (customers: Customer[]) => void;
   removeCustomer: (customerId: string) => void;
+  awardLoyaltyPoints: (phoneNumber: string, name: string, spendAmount: number)=>void;
 }
 
 export const useCustomerStore = create<CustomerStore>((set) => ({
@@ -21,4 +22,41 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
         (cust) => cust.customerId !== customerId,
       ),
     })),
+  awardLoyaltyPoints: (
+    phoneNumber: string,
+    name: string,
+    spendAmount: number,
+  ) =>
+    set((state) => {
+      const existingCustomer = state.customers.find(
+        (c) => c.phoneNumber === phoneNumber,
+      );
+      const pointsEarned = Math.floor(spendAmount / 100);
+
+      if (existingCustomer) {
+        return {
+          customers: state.customers.map((c) =>
+            c.phoneNumber === phoneNumber
+              ? {
+                  ...c,
+                  loyaltyPoints: c.loyaltyPoints + pointsEarned,
+                  totalSpend: c.totalSpend + spendAmount,
+                }
+              : c,
+          ),
+        };
+      }
+
+      const newCustomer: Customer = {
+        customerId: `CX${Date.now()}`,
+        name,
+        phoneNumber,
+        email: "",
+        notes: "",
+        loyaltyPoints: pointsEarned,
+        totalSpend: spendAmount,
+      };
+
+      return { customers: [...state.customers, newCustomer] };
+    }),
 }));

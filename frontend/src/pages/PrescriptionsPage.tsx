@@ -2,11 +2,13 @@ import { useState } from "react";
 import AddPrescriptionForm from "../components/AddPrescriptionForm";
 import { usePrescriptionStore } from "../store/prescriptionStore";
 import { getPresStatusClass } from "../utils/statusHelpers";
+import { useCustomerStore } from "../store/customerStore";
 
 const PrescriptionsPage = () => {
   const prescriptions = usePrescriptionStore((state) => state.prescriptions);
   const removePrescription = usePrescriptionStore((state) => state.removePrescription);
   const updatePrescriptionStatus = usePrescriptionStore((state) => state.updatePrescriptionStatus);
+  const awardPoints = useCustomerStore((state)=>state.awardLoyaltyPoints)
   const [name, setName] = useState("");
   const filteredPrescription = prescriptions.filter((cust) =>
     cust.name.toLowerCase().includes(name.toLowerCase()),
@@ -56,7 +58,9 @@ const PrescriptionsPage = () => {
                     <div className="flex gap-2">
                       {med.status === "pending" && (
                         <button
-                          onClick={() => updatePrescriptionStatus(med.prescriptionId, "paid")}
+                          onClick={() => {updatePrescriptionStatus(med.prescriptionId, "paid")
+                              awardPoints(med.phoneNumber,med.name, med.total)
+                          }}
                           className="bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-md text-xs font-medium hover:bg-green-100"
                         >
                           Mark as Paid
