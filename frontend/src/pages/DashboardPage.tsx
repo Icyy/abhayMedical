@@ -1,4 +1,5 @@
 import { useInventoryStore } from "../store/inventoryStore";
+import { usePrescriptionStore } from "../store/prescriptionStore";
 
 const DashboardPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
@@ -7,6 +8,18 @@ const DashboardPage = () => {
   const today = new Date();
   const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
   const expiryNear = medicines.filter((med) => med.expiryDate < in30Days);
+
+  const prescriptions = usePrescriptionStore((state) => state.prescriptions);
+
+  const todaysPaidPrescriptions = prescriptions.filter((p) => {
+    const isToday = p.date.toDateString() === today.toDateString();
+    return isToday && p.status === "paid";
+  });
+
+  const todaysRevenue = todaysPaidPrescriptions.reduce(
+    (sum, p) => sum + p.total,
+    0,
+  );
 
   const metrics = [
     {
@@ -36,6 +49,13 @@ const DashboardPage = () => {
       color: "text-orange-700",
       bg: "bg-orange-50",
       border: "border-orange-100",
+    },
+    {
+      label: "Today's Revenue",
+      value: `₹${todaysRevenue.toFixed(2)}`,
+      color: "text-green-700",
+      bg: "bg-green-50",
+      border: "border-green-100",
     },
   ];
 
@@ -71,7 +91,9 @@ const DashboardPage = () => {
           </thead>
           <tbody>
             {medicines
-              .filter((med) => med.status === "critical" || med.status === "low")
+              .filter(
+                (med) => med.status === "critical" || med.status === "low",
+              )
               .map((med) => (
                 <tr key={med.batchNumber} className="border-b border-gray-100">
                   <td className="p-3 text-sm">{med.name}</td>

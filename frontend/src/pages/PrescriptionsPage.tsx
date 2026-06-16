@@ -3,12 +3,20 @@ import AddPrescriptionForm from "../components/AddPrescriptionForm";
 import { usePrescriptionStore } from "../store/prescriptionStore";
 import { getPresStatusClass } from "../utils/statusHelpers";
 import { useCustomerStore } from "../store/customerStore";
+import type { Prescription } from "../types/prescription";
+import InvoiceModal from "../components/InvoiceModal";
 
 const PrescriptionsPage = () => {
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<Prescription | null>(null);
   const prescriptions = usePrescriptionStore((state) => state.prescriptions);
-  const removePrescription = usePrescriptionStore((state) => state.removePrescription);
-  const updatePrescriptionStatus = usePrescriptionStore((state) => state.updatePrescriptionStatus);
-  const awardPoints = useCustomerStore((state)=>state.awardLoyaltyPoints)
+  const removePrescription = usePrescriptionStore(
+    (state) => state.removePrescription,
+  );
+  const updatePrescriptionStatus = usePrescriptionStore(
+    (state) => state.updatePrescriptionStatus,
+  );
+  const awardPoints = useCustomerStore((state) => state.awardLoyaltyPoints);
   const [name, setName] = useState("");
   const filteredPrescription = prescriptions.filter((cust) =>
     cust.name.toLowerCase().includes(name.toLowerCase()),
@@ -32,25 +40,38 @@ const PrescriptionsPage = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left p-3 text-sm text-green-700">Patient Name</th>
-                <th className="text-left p-3 text-sm text-green-700">Medicine Count</th>
+                <th className="text-left p-3 text-sm text-green-700">
+                  Patient Name
+                </th>
+                <th className="text-left p-3 text-sm text-green-700">
+                  Medicine Count
+                </th>
                 <th className="text-left p-3 text-sm text-green-700">Doctor</th>
                 <th className="text-left p-3 text-sm text-green-700">Date</th>
                 <th className="text-left p-3 text-sm text-green-700">Total</th>
                 <th className="text-left p-3 text-sm text-green-700">Status</th>
-                <th className="text-left p-3 text-sm text-green-700">Actions</th>
+                <th className="text-left p-3 text-sm text-green-700">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredPrescription.map((med) => (
-                <tr key={med.prescriptionId} className="border-b border-gray-100">
+                <tr
+                  key={med.prescriptionId}
+                  className="border-b border-gray-100"
+                >
                   <td className="p-3 text-sm">{med.name}</td>
                   <td className="p-3 text-sm">{med.medicines.length}</td>
                   <td className="p-3 text-sm">{med.doctorName}</td>
-                  <td className="p-3 text-sm">{med.date.toLocaleDateString()}</td>
+                  <td className="p-3 text-sm">
+                    {med.date.toLocaleDateString()}
+                  </td>
                   <td className="p-3 text-sm">₹{med.total.toFixed(2)}</td>
                   <td className="p-3 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPresStatusClass(med.status)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getPresStatusClass(med.status)}`}
+                    >
                       {med.status}
                     </span>
                   </td>
@@ -58,8 +79,12 @@ const PrescriptionsPage = () => {
                     <div className="flex gap-2">
                       {med.status === "pending" && (
                         <button
-                          onClick={() => {updatePrescriptionStatus(med.prescriptionId, "paid")
-                              awardPoints(med.phoneNumber,med.name, med.total)
+                          onClick={() => {
+                            updatePrescriptionStatus(
+                              med.prescriptionId,
+                              "paid",
+                            );
+                            awardPoints(med.phoneNumber, med.name, med.total);
                           }}
                           className="bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-md text-xs font-medium hover:bg-green-100"
                         >
@@ -72,6 +97,12 @@ const PrescriptionsPage = () => {
                       >
                         🗑️
                       </button>
+                      <button
+                        onClick={() => setSelectedPrescription(med)}
+                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded-md text-xs font-medium"
+                      >
+                        View Invoice
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -80,6 +111,12 @@ const PrescriptionsPage = () => {
           </table>
         )}
       </div>
+      {selectedPrescription && (
+        <InvoiceModal
+          prescription={selectedPrescription}
+          onClose={() => setSelectedPrescription(null)}
+        />
+      )}
     </div>
   );
 };
