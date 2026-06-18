@@ -6,6 +6,9 @@ import authRoutes from './routes/authRoutes'
 import medicineRoutes from './routes/medicineRoutes'
 import customerRoutes from './routes/customerRoutes'
 import prescriptionRoutes from './routes/prescriptionRoutes'
+import supplierRoutes from './routes/supplierRoutes'
+import purchaseOrderRoutes from './routes/purchaseOrderRoutes'
+import reportsRoutes from './routes/reportsRoutes'
 
 dotenv.config()
 
@@ -23,6 +26,9 @@ app.use('/api/auth', authRoutes)
 app.use('/api/medicines', medicineRoutes)
 app.use('/api/customers', customerRoutes)
 app.use('/api/prescriptions', prescriptionRoutes)
+app.use('/api/suppliers', supplierRoutes)
+app.use('/api/purchase-orders', purchaseOrderRoutes)
+app.use('/api/reports', reportsRoutes)
 
 
 app.get('/health', (req, res) => {
