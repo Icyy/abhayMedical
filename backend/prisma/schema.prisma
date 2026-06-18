@@ -1,13 +1,85 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  password  String
+  role      Role     @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+}
+
+model Medicine {
+  id                String             @id @default(uuid())
+  name              String
+  unit              String
+  manufacturingDate DateTime
+  expiryDate        DateTime
+  price             Float
+  stock             Int
+  batchNumber       String             @unique
+  status            MedicineStatus     @default(OK)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  prescriptionItems PrescriptionItem[]
+}
+
+model Customer {
+  id            String         @id @default(uuid())
+  name          String
+  phoneNumber   String         @unique
+  email         String?
+  notes         String?
+  loyaltyPoints Int            @default(0)
+  totalSpend    Float          @default(0)
+  createdAt     DateTime       @default(now())
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id         String             @id @default(uuid())
+  customerId String
+  customer   Customer           @relation(fields: [customerId], references: [id])
+  doctorName String?
+  notes      String?
+  discount   Float              @default(0)
+  subTotal   Float
+  total      Float
+  status     PrescriptionStatus @default(PENDING)
+  date       DateTime           @default(now())
+  items      PrescriptionItem[]
+}
+
+model PrescriptionItem {
+  id             String       @id @default(uuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  medicineId     String
+  medicine       Medicine     @relation(fields: [medicineId], references: [id])
+  quantity       Int
+  price          Float
+}
+
+enum Role {
+  OWNER
+  EMPLOYEE
+  ADMIN
+}
+
+enum MedicineStatus {
+  OK
+  LOW
+  CRITICAL
+}
+
+enum PrescriptionStatus {
+  PENDING
+  PAID
+  REJECTED
 }
