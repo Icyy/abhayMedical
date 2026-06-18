@@ -13,7 +13,7 @@ const SideBar = () => {
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden md:flex w-64 h-screen bg-green-800 flex-col p-4">
+      <div className="hidden md:flex w-64 bg-green-800 flex-col p-4">
         <h1 className="text-white text-lg font-medium px-3 mb-6">Abhay Medical</h1>
         {navLinks.map((link) => {
           const Icon = link.icon;
