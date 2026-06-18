@@ -1,6 +1,7 @@
 import { Response } from 'express'
 import prisma from '../prisma'
-import { AuthRequest } from '../middleware/authMiddleware'
+import { AuthRequest } from '../middlewares/authMiddleware'
+
 
 export const getMedicines = async (req: AuthRequest, res: Response) => {
   try {

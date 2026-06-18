@@ -6,8 +6,9 @@ dotenv.config()
 
 export default defineConfig({
   datasource: {
-    adapter: new PrismaPg({ 
-      connectionString: process.env.DATABASE_URL! 
+    adapter: new PrismaPg({
+      connectionString: process.env.DATABASE_URL!
     }),
+    url: process.env.DATABASE_URL!,
   },
 })

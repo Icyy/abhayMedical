@@ -66,6 +66,59 @@ model PrescriptionItem {
   price          Float
 }
 
+model Supplier {
+  id            String          @id @default(uuid())
+  name          String
+  contactPerson String?
+  phone         String          @unique
+  email         String?
+  address       String?
+  gstNumber     String?
+  createdAt     DateTime        @default(now())
+  purchaseOrders PurchaseOrder[]
+  medicines     SupplierMedicine[]
+}
+
+model SupplierMedicine {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  medicineName String
+  pricePerUnit Float
+  updatedAt   DateTime @updatedAt
+
+  @@unique([supplierId, medicineName])
+}
+
+model PurchaseOrder {
+  id               String        @id @default(uuid())
+  supplierId       String
+  supplier         Supplier      @relation(fields: [supplierId], references: [id])
+  status           PurchaseStatus @default(PENDING)
+  totalCost        Float
+  orderDate        DateTime      @default(now())
+  expectedDelivery DateTime?
+  receivedDate     DateTime?
+  notes            String?
+  items            PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  medicineName    String
+  quantity        Int
+  pricePerUnit    Float
+  totalPrice      Float
+}
+
+enum PurchaseStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
 enum Role {
   OWNER
   EMPLOYEE
