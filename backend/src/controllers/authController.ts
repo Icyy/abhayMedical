@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import prisma from '../prisma'
+import { AuthRequest } from '../middlewares/authMiddleware'
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -88,5 +89,22 @@ export const login = async (req: Request, res: Response) => {
     })
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong' })
+  }
+}
+
+export const getMe = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { id: true, name: true, phone: true, role: true }
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    res.json(user)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user' })
   }
 }

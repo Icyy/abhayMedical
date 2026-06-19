@@ -98,3 +98,19 @@ export const reduceStock = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to reduce stock' })
   }
 }
+
+export const updateMedicineStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+
+    const medicine = await prisma.medicine.update({
+      where: { id },
+      data: { status }
+    })
+
+    res.json(medicine)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update medicine status' })
+  }
+}
