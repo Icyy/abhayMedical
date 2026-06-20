@@ -1,25 +1,29 @@
+import { useEffect } from "react";
 import { useInventoryStore } from "../store/inventoryStore";
 import { usePrescriptionStore } from "../store/prescriptionStore";
 
 const DashboardPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
+  const loadMedicines = useInventoryStore((state) => state.loadMedicines);
+  const prescriptions = usePrescriptionStore((state) => state.prescriptions);
+  const loadPrescriptions = usePrescriptionStore((state) => state.loadPrescriptions);
+
+  useEffect(() => {
+    loadMedicines();
+    loadPrescriptions();
+  }, []);
+
   const critical = medicines.filter((med) => med.status === "CRITICAL");
   const lowStock = medicines.filter((med) => med.stock < 10);
   const today = new Date();
   const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const expiryNear = medicines.filter((med) => med.expiryDate < in30Days);
-
-  const prescriptions = usePrescriptionStore((state) => state.prescriptions);
+  const expiryNear = medicines.filter((med) => new Date(med.expiryDate) < in30Days);
 
   const todaysPaidPrescriptions = prescriptions.filter((p) => {
     const isToday = new Date(p.date).toDateString() === today.toDateString();
     return isToday && p.status === "PAID";
   });
-
-  const todaysRevenue = todaysPaidPrescriptions.reduce(
-    (sum, p) => sum + p.total,
-    0,
-  );
+  const todaysRevenue = todaysPaidPrescriptions.reduce((sum, p) => sum + p.total, 0);
 
   const metrics = [
     {
@@ -63,7 +67,7 @@ const DashboardPage = () => {
     <div className="p-6">
       <h1 className="text-xl font-medium text-gray-800 mb-6">Dashboard</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {metrics.map((metric) => (
           <div
             key={metric.label}
@@ -91,11 +95,9 @@ const DashboardPage = () => {
           </thead>
           <tbody>
             {medicines
-              .filter(
-                (med) => med.status === "CRITICAL" || med.status === "LOW",
-              )
+              .filter((med) => med.status === "CRITICAL" || med.status === "LOW")
               .map((med) => (
-                <tr key={med.batchNumber} className="border-b border-gray-100">
+                <tr key={med.id} className="border-b border-gray-100">
                   <td className="p-3 text-sm">{med.name}</td>
                   <td className="p-3 text-sm">{med.stock}</td>
                   <td className="p-3 text-sm">

@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import type { Medicine } from "../types/inventory";
 
 interface AddMedicineFormProps {
-  onSubmit: (medicine: Omit<Medicine, 'id'>) => Promise<void>;
+  onSubmit: (medicine: Omit<Medicine, "id">) => Promise<void>;
 }
 
 type MedicineFormData = {
@@ -34,7 +34,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
   });
 
   const onFormSubmit = async (data: MedicineFormData) => {
-    const newMedicine: Omit<Medicine, 'id'> = {
+    const newMedicine: Omit<Medicine, "id"> = {
       name: data.name,
       stock: data.stock,
       unit: data.unit,
@@ -45,7 +45,16 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       status: data.status,
     };
     await onSubmit(newMedicine);
-    reset();
+    reset({
+      name: "",
+      stock: 0,
+      unit: "",
+      price: 0,
+      batchNumber: "",
+      manufacturingDate:"",
+      expiryDate:"",
+      status:"OK",
+    });
   };
 
   return (
@@ -60,7 +69,9 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             placeholder="e.g. Paracetamol 500mg"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -80,11 +91,13 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             {...register("stock", {
               required: "Stock is required",
               valueAsNumber: true,
-              min: { value: 1, message: "Stock must be at least 1" }
+              min: { value: 1, message: "Stock must be at least 1" },
             })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>}
+          {errors.stock && (
+            <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -108,12 +121,14 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             min="0"
             {...register("price", {
               required: "Price is required",
-              valueAsNumber: true, 
-              min: { value: 1, message: "Price must be at least 1" }
+              valueAsNumber: true,
+              min: { value: 1, message: "Price must be at least 1" },
             })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>}
+          {errors.price && (
+            <p className="text-red-500 text-xs mt-1">{errors.price.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -132,10 +147,16 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Manufacturing date</label>
           <input
             type="date"
-            {...register("manufacturingDate", { required: "Manufacturing date is required" })}
+            {...register("manufacturingDate", {
+              required: "Manufacturing date is required",
+            })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.manufacturingDate && <p className="text-red-500 text-xs mt-1">{errors.manufacturingDate.message}</p>}
+          {errors.manufacturingDate && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.manufacturingDate.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -145,7 +166,11 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             {...register("expiryDate", { required: "Expiry date is required" })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.expiryDate && <p className="text-red-500 text-xs mt-1">{errors.expiryDate.message}</p>}
+          {errors.expiryDate && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.expiryDate.message}
+            </p>
+          )}
         </div>
       </div>
 

@@ -5,7 +5,7 @@ export const fetchCustomers = (): Promise<Customer[]> => {
   return apiRequest('/customers')
 }
 
-export const createCustomer = (customer: Omit<Customer, 'customerId' | 'loyaltyPoints' | 'totalSpend'>): Promise<Customer> => {
+export const createCustomer = (customer: Omit<Customer, 'id' | 'loyaltyPoints' | 'totalSpend'>): Promise<Customer> => {
   return apiRequest('/customers', {
     method: 'POST',
     body: JSON.stringify(customer),

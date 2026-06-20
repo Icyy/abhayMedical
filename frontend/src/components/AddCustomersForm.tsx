@@ -30,7 +30,12 @@ const AddCustomersForm = () => {
       email: data.email,
       notes: data.notes,
     });
-    reset();
+    reset({
+      name: "",
+      phoneNumber: "",
+      email: "",
+      notes: "",
+    });
   };
 
   return (

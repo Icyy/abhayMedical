@@ -42,8 +42,6 @@ const AddPrescriptionForm = () => {
   const [medicineError, setMedicineError] = useState("");
   const [autoCompleteKey, setAutocompleteKey] = useState(0);
 
-  
-
   const handleMedicineSelect = (medicine: Medicine) => {
     setPendingMedicine(medicine);
   };
@@ -101,7 +99,13 @@ const AddPrescriptionForm = () => {
       })),
     });
 
-    reset();
+    reset({
+      customerPhone: "",
+      customerName: "",
+      doctorName: "",
+      notes: "",
+      discount: 0,
+    });
     setSelectedMedicines([]);
     setMedicineError("");
   };
@@ -162,6 +166,7 @@ const AddPrescriptionForm = () => {
           <label className="text-sm text-gray-500">Discount %</label>
           <input
             type="number"
+            min="0"
             {...register("discount", {
               valueAsNumber: true,
               min: { value: 0, message: "Discount cannot be negative" },
@@ -190,7 +195,10 @@ const AddPrescriptionForm = () => {
         <h3 className="text-sm font-medium text-gray-700 mb-3">Medicines</h3>
 
         <div className="flex flex-col sm:flex-row gap-2 mb-2">
-          <MedicineAutocomplete onSelect={handleMedicineSelect} key={autoCompleteKey} />
+          <MedicineAutocomplete
+            onSelect={handleMedicineSelect}
+            key={autoCompleteKey}
+          />
           <input
             type="number"
             min={1}
