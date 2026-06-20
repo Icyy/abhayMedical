@@ -1,79 +1,46 @@
 import { create } from 'zustand'
 import type { Medicine } from '../types/inventory'
-
-const mockMedicines: Medicine[] = [
-  {
-    name: "Paracetamol 500mg",
-    unit: "strips",
-    stock: 12,
-    price: 25,
-    batchNumber: "BX4821",
-    manufacturingDate: new Date("2024-01-01"),
-    expiryDate: new Date("2026-01-01"),
-    status: "critical",
-  },
-  {
-    name: "Azithromycin 250mg",
-    unit: "strips",
-    stock: 5,
-    price: 85,
-    batchNumber: "AZ1092",
-    manufacturingDate: new Date("2024-03-01"),
-    expiryDate: new Date("2026-03-01"),
-    status: "critical",
-  },
-  {
-    name: "Paracetamol test 500mg",
-    unit: "capsules",
-    stock: 12,
-    price: 25,
-    batchNumber: "BX482221",
-    manufacturingDate: new Date("2024-01-01"),
-    expiryDate: new Date("2026-01-01"),
-    status: "ok",
-  },
-    {
-    name: "Paracetamol test2 500mg",
-    unit: "capsules",
-    stock: 8,
-    price: 25,
-    batchNumber: "BX4823321",
-    manufacturingDate: new Date("2024-01-01"),
-    expiryDate: new Date("2026-01-01"),
-    status: "low",
-  },
-];
-
+import { fetchMedicines, createMedicine, deleteMedicineById, updateMedicineStatusById } from '../services/medicineService'
 
 interface InventoryStore {
   medicines: Medicine[]
-  addMedicine: (medicine: Medicine) => void
-  setMedicines: (medicines: Medicine[]) => void
-  removeMedicine: (batchNumber: string) => void
-  updateMedicineStatus: (batchNumber: string, status: Medicine['status']) => void
-  reduceStock: (name: string, quantity: number) => void
-  
+  isLoading: boolean
+  error: string | null
+  loadMedicines: () => Promise<void>
+  addMedicine: (medicine: Omit<Medicine, 'id'>) => Promise<void>
+  removeMedicine: (id: string) => Promise<void>
+  updateMedicineStatus: (id: string, status: Medicine['status']) => Promise<void>
 }
 
-export const useInventoryStore = create<InventoryStore>((set) => ({
-  medicines: mockMedicines,
-  addMedicine: (medicine) => set((state) => ({
-    medicines: [...state.medicines, medicine]
-  })),
-  setMedicines: (medicines: Medicine[]) => set({ medicines }),
-  removeMedicine: (batchNumber: string) => set((state) => ({
-  medicines: state.medicines.filter((med) => med.batchNumber !== batchNumber)
-})),
-updateMedicineStatus: (batchNumber: string, status: Medicine['status']) => set((state) => ({
-  medicines: state.medicines.map((med) => 
-    med.batchNumber === batchNumber ? { ...med, status } : med
-  )
-})),
-reduceStock: (name: string, quantity: number) => set((state) => ({
-  medicines: state.medicines.map((med) =>
-    med.name === name
-      ? { ...med, stock: Math.max(0, med.stock - quantity) }
-      : med
-  )
-}))
+export const useInventoryStore = create<InventoryStore>((set, get) => ({
+  medicines: [],
+  isLoading: false,
+  error: null,
+
+  loadMedicines: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const medicines = await fetchMedicines()
+      set({ medicines, isLoading: false })
+    } catch (err) {
+      set({ error: 'Failed to load medicines', isLoading: false })
+    }
+  },
+
+  addMedicine: async (medicine) => {
+    const newMedicine = await createMedicine(medicine)
+    set((state) => ({ medicines: [...state.medicines, newMedicine] }))
+  },
+
+  removeMedicine: async (id) => {
+    await deleteMedicineById(id)
+    set((state) => ({ medicines: state.medicines.filter((med) => med.id !== id) }))
+  },
+
+  updateMedicineStatus: async (id, status) => {
+    const updated = await updateMedicineStatusById(id, status)
+    set((state) => ({
+      medicines: state.medicines.map((med) => (med.id === id ? updated : med))
+    }))
+  },
 }))

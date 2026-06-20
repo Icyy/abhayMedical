@@ -3,7 +3,7 @@ import { usePrescriptionStore } from "../store/prescriptionStore";
 
 const DashboardPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
-  const critical = medicines.filter((med) => med.status === "critical");
+  const critical = medicines.filter((med) => med.status === "CRITICAL");
   const lowStock = medicines.filter((med) => med.stock < 10);
   const today = new Date();
   const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -12,8 +12,8 @@ const DashboardPage = () => {
   const prescriptions = usePrescriptionStore((state) => state.prescriptions);
 
   const todaysPaidPrescriptions = prescriptions.filter((p) => {
-    const isToday = p.date.toDateString() === today.toDateString();
-    return isToday && p.status === "paid";
+    const isToday = new Date(p.date).toDateString() === today.toDateString();
+    return isToday && p.status === "PAID";
   });
 
   const todaysRevenue = todaysPaidPrescriptions.reduce(
@@ -92,7 +92,7 @@ const DashboardPage = () => {
           <tbody>
             {medicines
               .filter(
-                (med) => med.status === "critical" || med.status === "low",
+                (med) => med.status === "CRITICAL" || med.status === "LOW",
               )
               .map((med) => (
                 <tr key={med.batchNumber} className="border-b border-gray-100">
@@ -101,7 +101,7 @@ const DashboardPage = () => {
                   <td className="p-3 text-sm">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        med.status === "critical"
+                        med.status === "CRITICAL"
                           ? "bg-red-100 text-red-800"
                           : "bg-yellow-100 text-yellow-800"
                       }`}

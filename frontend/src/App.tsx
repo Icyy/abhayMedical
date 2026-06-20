@@ -5,6 +5,8 @@ import PrescriptionsPage from "./pages/PrescriptionsPage";
 import CustomersPage from "./pages/CustomersPage";
 import ReordersPage from "./pages/ReordersPage";
 import SideBar from "./components/SideBar";
+import LoginPage from "./pages/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
@@ -14,11 +16,12 @@ const App = () => {
         <div className="flex-1 pb-20 md:pb-0 min-w-0">
           <h1 className="font-bold text-white p-3 bg-green-700">Abhay Medical</h1>
           <Routes>
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/prescriptions" element={<PrescriptionsPage />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/reorders" element={<ReordersPage />} />
+            <Route path="/inventory" element={<ProtectedRoute><InventoryPage /></ProtectedRoute>} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/prescriptions" element={<ProtectedRoute><PrescriptionsPage /></ProtectedRoute>} />
+            <Route path="/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
+            <Route path="/reorders" element={<ProtectedRoute><ReordersPage /></ProtectedRoute>} />
           </Routes>
         </div>
       </div>

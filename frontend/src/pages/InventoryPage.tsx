@@ -1,21 +1,32 @@
+import { useEffect, useState } from "react";
 import { InventoryTable } from "../components/InventoryTable";
 import AddMedicineForm from "../components/AddMedicineForm";
 import type { Medicine } from "../types/inventory";
 import { useInventoryStore } from "../store/inventoryStore";
-import { useState } from "react";
 
 const InventoryPage = () => {
   const medicines = useInventoryStore((state) => state.medicines);
+  const isLoading = useInventoryStore((state) => state.isLoading);
+  const error = useInventoryStore((state) => state.error);
+  const loadMedicines = useInventoryStore((state) => state.loadMedicines);
   const addMedicine = useInventoryStore((state) => state.addMedicine);
-  const removeMedicine = useInventoryStore((state)=> state.removeMedicine)
+  const removeMedicine = useInventoryStore((state) => state.removeMedicine);
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    loadMedicines();
+  }, []);
+
   const filteredMedicines = medicines.filter((med) =>
     med.name.toLowerCase().includes(name.toLowerCase()),
   );
 
-  const handleAddMedicine = (newMedicine: Medicine) => {
-    addMedicine(newMedicine);
+  const handleAddMedicine = async (newMedicine: Omit<Medicine, 'id'>) => {
+    await addMedicine(newMedicine);
   };
+
+  if (isLoading) return <p className="p-6 text-gray-500">Loading medicines...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
     <div className="p-6">

@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddCustomersForm from "../components/AddCustomersForm";
 import { useCustomerStore } from "../store/customerStore";
 
 const CustomersPage = () => {
   const customer = useCustomerStore((state) => state.customers);
+  const isLoading = useCustomerStore((state) => state.isLoading);
+  const error = useCustomerStore((state) => state.error);
+  const loadCustomers = useCustomerStore((state) => state.loadCustomers);
   const removeCustomer = useCustomerStore((state) => state.removeCustomer);
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
   const filteredCustomer = customer.filter((cust) =>
     cust.name.toLowerCase().includes(name.toLowerCase()),
   );
+
+  if (isLoading)
+    return <p className="p-6 text-gray-500">Loading customers...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
+
   return (
     <div className="p-6">
       <h1 className="text-xl font-medium text-gray-800 mb-4">Customers</h1>
@@ -29,18 +42,32 @@ const CustomersPage = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left p-3 text-sm text-gray-500">Name</th>
-                    <th className="text-left p-3 text-sm text-gray-500">Email</th>
-                    <th className="text-left p-3 text-sm text-gray-500">Phone Number</th>
-                    <th className="text-left p-3 text-sm text-gray-500">Loyalty Points</th>
-                    <th className="text-left p-3 text-sm text-gray-500">Notes</th>
-                    <th className="text-left p-3 text-sm text-gray-500">Total Spend</th>
-                    <th className="text-left p-3 text-sm text-gray-500">Remove Customer</th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Name
+                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Email
+                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Phone Number
+                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Loyalty Points
+                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Notes
+                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Total Spend
+                    </th>
+                    <th className="text-left p-3 text-sm text-gray-500">
+                      Remove Customer
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCustomer.map((cust) => (
-                    <tr className="border-b border-gray-200" key={cust.customerId}>
+                    <tr className="border-b border-gray-200" key={cust.id}>
                       <td className="p-3 text-sm">{cust.name}</td>
                       <td className="p-3 text-sm">{cust.email}</td>
                       <td className="p-3 text-sm">{cust.phoneNumber}</td>
@@ -49,7 +76,11 @@ const CustomersPage = () => {
                       <td className="p-3 text-sm">{cust.totalSpend}</td>
                       <td className="p-3 text-sm">
                         <button
-                          onClick={() => removeCustomer(cust.customerId)}
+                          onClick={() => {
+                            if (confirm(`Remove ${cust.name}?`)) {
+                              removeCustomer(cust.id);
+                            }
+                          }}
                           className="text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-md transition-colors text-xs font-medium"
                         >
                           🗑️ Remove

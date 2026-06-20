@@ -1,62 +1,73 @@
 import { create } from "zustand";
 import type { Customer } from "../types/customer";
+import {
+  fetchCustomers,
+  createCustomer,
+  deleteCustomerById,
+  awardCustomerLoyaltyPoints,
+} from "../services/customerService";
 
 interface CustomerStore {
   customers: Customer[];
-  addCustomer: (customer: Customer) => void;
-  setCustomers: (customers: Customer[]) => void;
-  removeCustomer: (customerId: string) => void;
-  awardLoyaltyPoints: (phoneNumber: string, name: string, spendAmount: number)=>void;
-}
-
-export const useCustomerStore = create<CustomerStore>((set) => ({
-  customers: [],
-  addCustomer: (customer) =>
-    set((state) => ({
-      customers: [...state.customers, customer],
-    })),
-  setCustomers: (customers: Customer[]) => set({ customers }),
-  removeCustomer: (customerId: string) =>
-    set((state) => ({
-      customers: state.customers.filter(
-        (cust) => cust.customerId !== customerId,
-      ),
-    })),
+  isLoading: boolean;
+  error: string | null;
+  loadCustomers: () => Promise<void>;
+  addCustomer: (
+    customer: Omit<Customer, "id" | "loyaltyPoints" | "totalSpend">,
+  ) => Promise<void>;
+  removeCustomer: (id: string) => Promise<void>;
   awardLoyaltyPoints: (
     phoneNumber: string,
     name: string,
     spendAmount: number,
-  ) =>
-    set((state) => {
-      const existingCustomer = state.customers.find(
-        (c) => c.phoneNumber === phoneNumber,
-      );
-      const pointsEarned = Math.floor(spendAmount / 100);
+  ) => Promise<void>;
+}
 
-      if (existingCustomer) {
+export const useCustomerStore = create<CustomerStore>((set) => ({
+  customers: [],
+  isLoading: false,
+  error: null,
+
+  loadCustomers: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const customers = await fetchCustomers();
+      set({ customers, isLoading: false });
+    } catch (err) {
+      set({ error: "Failed to load customers", isLoading: false });
+    }
+  },
+
+  addCustomer: async (customer) => {
+    const newCustomer = await createCustomer(customer);
+    set((state) => ({ customers: [...state.customers, newCustomer] }));
+  },
+
+  removeCustomer: async (id) => {
+    await deleteCustomerById(id);
+    set((state) => ({
+      customers: state.customers.filter((c) => c.id !== id),
+    }));
+  },
+
+  awardLoyaltyPoints: async (phoneNumber, name, spendAmount) => {
+    const updated = await awardCustomerLoyaltyPoints(
+      phoneNumber,
+      name,
+      spendAmount,
+    );
+    set((state) => {
+      const exists = state.customers.find(
+        (c) => c.id === updated.id,
+      );
+      if (exists) {
         return {
           customers: state.customers.map((c) =>
-            c.phoneNumber === phoneNumber
-              ? {
-                  ...c,
-                  loyaltyPoints: c.loyaltyPoints + pointsEarned,
-                  totalSpend: c.totalSpend + spendAmount,
-                }
-              : c,
+            c.id === updated.id ? updated : c,
           ),
         };
       }
-
-      const newCustomer: Customer = {
-        customerId: `CX${Date.now()}`,
-        name,
-        phoneNumber,
-        email: "",
-        notes: "",
-        loyaltyPoints: pointsEarned,
-        totalSpend: spendAmount,
-      };
-
-      return { customers: [...state.customers, newCustomer] };
-    }),
+      return { customers: [...state.customers, updated] };
+    });
+  },
 }));

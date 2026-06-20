@@ -18,18 +18,19 @@ const InvoiceModal = ({ prescription, onClose }: InvoiceModalProps) => {
 
         <div className="border-b border-gray-100 pb-4 mb-4">
           <p className="text-sm text-gray-500">Patient</p>
-          <p className="font-medium">{prescription.name}</p>
+          <p className="font-medium">{prescription.customer.name}</p>
           <p className="text-sm text-gray-500 mt-2">Doctor</p>
           <p className="font-medium">{prescription.doctorName || "—"}</p>
           <p className="text-sm text-gray-500 mt-2">Date</p>
-          <p className="font-medium">{prescription.date.toLocaleDateString()}</p>
+          <p className="font-medium">{new Date(prescription.date).toLocaleDateString()}</p>
         </div>
 
         <div className="mb-4">
           <p className="text-sm font-medium text-gray-700 mb-2">Medicines</p>
-          {prescription.medicines.map((med, index) => (
-            <div key={index} className="flex justify-between text-sm py-1">
-              <span>{med.name} × {med.quantity}</span>
+          {prescription.items.map((item) => (
+            <div key={item.id} className="flex justify-between text-sm py-1">
+              <span>{item.medicine.name} × {item.quantity}</span>
+              <span>₹{(item.price * item.quantity).toFixed(2)}</span>
             </div>
           ))}
         </div>

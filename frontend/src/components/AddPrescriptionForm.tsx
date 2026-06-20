@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { usePrescriptionStore } from "../store/prescriptionStore";
-import type { Prescription } from "../types/prescription";
-import { useInventoryStore } from "../store/inventoryStore";
+import MedicineAutocomplete from "./MedicineAutocomplete";
+import type { Medicine } from "../types/inventory";
 
-interface PrescribedMedicine {
+interface SelectedMedicine {
+  medicineId: string;
   name: string;
   quantity: number;
+  price: number;
+  availableStock: number;
 }
 
 type PrescriptionFormData = {
-  name: string;
-  phoneNumber: string;
+  customerName: string;
+  customerPhone: string;
   doctorName: string;
   notes: string;
   discount: number;
@@ -21,8 +24,6 @@ const AddPrescriptionForm = () => {
   const addPrescription = usePrescriptionStore(
     (state) => state.addPrescription,
   );
-  const reduceStock = useInventoryStore((state) => state.reduceStock);
-  const medicines = useInventoryStore((state) => state.medicines);
 
   const {
     register,
@@ -30,69 +31,78 @@ const AddPrescriptionForm = () => {
     reset,
     formState: { errors },
   } = useForm<PrescriptionFormData>({
-    defaultValues: {
-      discount: 0,
-      notes: "",
-      doctorName: "",
-    },
+    defaultValues: { discount: 0, notes: "", doctorName: "" },
   });
 
-  const [prescribedMedicines, setPrescribedMedicines] = useState<
-    PrescribedMedicine[]
+  const [selectedMedicines, setSelectedMedicines] = useState<
+    SelectedMedicine[]
   >([]);
-  const [currentMedicine, setCurrentMedicine] = useState({
-    name: "",
-    quantity: 0,
-  });
+  const [pendingQuantity, setPendingQuantity] = useState(1);
+  const [pendingMedicine, setPendingMedicine] = useState<Medicine | null>(null);
   const [medicineError, setMedicineError] = useState("");
+  const [autoCompleteKey, setAutocompleteKey] = useState(0);
 
-  const handleAddMedicine = () => {
-    if (!currentMedicine.name || currentMedicine.quantity === 0) {
-      setMedicineError("Please enter medicine name and quantity");
+  
+
+  const handleMedicineSelect = (medicine: Medicine) => {
+    setPendingMedicine(medicine);
+  };
+
+  const handleAddToList = () => {
+    if (!pendingMedicine) {
+      setMedicineError("Please select a medicine first");
       return;
     }
+    if (pendingQuantity < 1) {
+      setMedicineError("Quantity must be at least 1");
+      return;
+    }
+    if (pendingQuantity > pendingMedicine.stock) {
+      setMedicineError(`Only ${pendingMedicine.stock} in stock`);
+      return;
+    }
+
     setMedicineError("");
-    setPrescribedMedicines([...prescribedMedicines, currentMedicine]);
-    setCurrentMedicine({ name: "", quantity: 0 });
+    setSelectedMedicines([
+      ...selectedMedicines,
+      {
+        medicineId: pendingMedicine.id,
+        name: pendingMedicine.name,
+        quantity: pendingQuantity,
+        price: pendingMedicine.price,
+        availableStock: pendingMedicine.stock,
+      },
+    ]);
+    setAutocompleteKey((prev) => prev + 1);
+    setPendingMedicine(null);
+    setPendingQuantity(1);
   };
 
   const handleRemoveMedicine = (index: number) => {
-    setPrescribedMedicines(prescribedMedicines.filter((_, i) => i !== index));
+    setSelectedMedicines(selectedMedicines.filter((_, i) => i !== index));
   };
 
-  const onFormSubmit = (data: PrescriptionFormData) => {
-    if (prescribedMedicines.length === 0) {
+  const onFormSubmit = async (data: PrescriptionFormData) => {
+    if (selectedMedicines.length === 0) {
       setMedicineError("Please add at least one medicine");
       return;
     }
 
-    const subTotal = prescribedMedicines.reduce((total, med) => {
-      const inventoryMed = medicines.find((m) => m.name === med.name);
-      const price = inventoryMed ? inventoryMed.price : 0;
-      return total + price * med.quantity;
-    }, 0);
-    const total = subTotal - (subTotal * data.discount) / 100;
-    const newPrescription: Prescription = {
-      prescriptionId: `RX${Date.now()}`,
-      name: data.name,
-      phoneNumber: data.phoneNumber,
+    await addPrescription({
+      customerPhone: data.customerPhone,
+      customerName: data.customerName,
       doctorName: data.doctorName,
       notes: data.notes,
       discount: data.discount,
-      medicines: prescribedMedicines,
-      subTotal: subTotal,
-      total: total,
-      status: "pending",
-      date: new Date(),
-    };
-
-    addPrescription(newPrescription);
-    prescribedMedicines.forEach((med) => {
-      reduceStock(med.name, med.quantity);
+      items: selectedMedicines.map((med) => ({
+        medicineId: med.medicineId,
+        quantity: med.quantity,
+        price: med.price,
+      })),
     });
+
     reset();
-    console.log(subTotal, total)
-    setPrescribedMedicines([]);
+    setSelectedMedicines([]);
     setMedicineError("");
   };
 
@@ -106,19 +116,23 @@ const AddPrescriptionForm = () => {
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Patient name</label>
           <input
-            {...register("name", { required: "Patient name is required" })}
+            {...register("customerName", {
+              required: "Patient name is required",
+            })}
             placeholder="e.g. Ramesh Shah"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.name && (
-            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          {errors.customerName && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.customerName.message}
+            </p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Phone number</label>
           <input
-            {...register("phoneNumber", {
+            {...register("customerPhone", {
               required: "Phone number is required",
               pattern: {
                 value: /^[0-9]{10}$/,
@@ -128,9 +142,9 @@ const AddPrescriptionForm = () => {
             placeholder="e.g. 9876543210"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.phoneNumber && (
+          {errors.customerPhone && (
             <p className="text-red-500 text-xs mt-1">
-              {errors.phoneNumber.message}
+              {errors.customerPhone.message}
             </p>
           )}
         </div>
@@ -149,6 +163,7 @@ const AddPrescriptionForm = () => {
           <input
             type="number"
             {...register("discount", {
+              valueAsNumber: true,
               min: { value: 0, message: "Discount cannot be negative" },
               max: { value: 100, message: "Discount cannot exceed 100%" },
             })}
@@ -161,7 +176,7 @@ const AddPrescriptionForm = () => {
           )}
         </div>
 
-        <div className="flex flex-col gap-1 col-span-2">
+        <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
           <label className="text-sm text-gray-500">Notes</label>
           <textarea
             {...register("notes")}
@@ -173,51 +188,47 @@ const AddPrescriptionForm = () => {
 
       <div className="border border-gray-100 rounded-lg p-4 mb-4">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Medicines</h3>
-        <div className="flex-col sm:flex-row gap-2 mb-3">
-          <input
-            value={currentMedicine.name}
-            onChange={(e) =>
-              setCurrentMedicine({ ...currentMedicine, name: e.target.value })
-            }
-            placeholder="Medicine name"
-            className="flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-          />
+
+        <div className="flex flex-col sm:flex-row gap-2 mb-2">
+          <MedicineAutocomplete onSelect={handleMedicineSelect} key={autoCompleteKey} />
           <input
             type="number"
-            value={currentMedicine.quantity}
-            onChange={(e) =>
-              setCurrentMedicine({
-                ...currentMedicine,
-                quantity: Number(e.target.value),
-              })
-            }
+            min={1}
+            value={pendingQuantity}
+            onChange={(e) => setPendingQuantity(Number(e.target.value))}
             placeholder="Qty"
-            className="w-24 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+            className="w-full sm:w-24 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
           <button
-            onClick={handleAddMedicine}
-            className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-100"
+            onClick={handleAddToList}
+            className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-100 whitespace-nowrap"
           >
             Add
           </button>
         </div>
 
+        {pendingMedicine && (
+          <p className="text-xs text-green-700 mb-2">
+            Selected: {pendingMedicine.name} (Stock: {pendingMedicine.stock})
+          </p>
+        )}
+
         {medicineError && (
           <p className="text-red-500 text-xs mb-2">{medicineError}</p>
         )}
 
-        {prescribedMedicines.length === 0 ? (
+        {selectedMedicines.length === 0 ? (
           <p className="text-sm text-gray-400">No medicines added yet</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {prescribedMedicines.map((med, index) => (
+            {selectedMedicines.map((med, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md"
               >
                 <span className="text-sm">{med.name}</span>
                 <span className="text-sm text-gray-500">
-                  Qty: {med.quantity}
+                  Qty: {med.quantity} × ₹{med.price}
                 </span>
                 <button
                   onClick={() => handleRemoveMedicine(index)}
@@ -233,7 +244,7 @@ const AddPrescriptionForm = () => {
 
       <button
         onClick={handleSubmit(onFormSubmit)}
-        className="mt-6 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors"
+        className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors"
       >
         Save Prescription
       </button>

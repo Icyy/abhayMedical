@@ -1,19 +1,28 @@
-export interface PrescribedMedicine {
-    quantity: number,
-    name: string
+interface PrescriptionItem {
+  id: string;
+  medicineId: string;
+  quantity: number;
+  price: number;
+  medicine: {
+    id: string;
+    name: string;
+  };
 }
 
-
 export interface Prescription {
-  name: string;
-  phoneNumber: string;
-  medicines: Array<PrescribedMedicine>;
+  id: string;
+  customerId: string;
+  customer: {
+    id: string;
+    name: string;
+    phoneNumber: string;
+  };
+  doctorName: string;
+  notes: string;
+  discount: number;
   subTotal: number;
   total: number;
-  discount: number;
-  prescriptionId: string; 
-  status: 'paid' | 'pending' | 'rejected'
-  notes: string
-  doctorName: string
-  date: Date
+  status: 'PAID' | 'PENDING' | 'REJECTED';
+  date: string;
+  items: PrescriptionItem[];
 }

@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import type { Medicine } from "../types/inventory";
 
 interface AddMedicineFormProps {
-  onSubmit: (medicine: Medicine) => void;
+  onSubmit: (medicine: Omit<Medicine, 'id'>) => Promise<void>;
 }
 
 type MedicineFormData = {
@@ -11,7 +11,7 @@ type MedicineFormData = {
   stock: number;
   unit: string;
   price: number;
-  status: "ok" | "low" | "critical";
+  status: "OK" | "LOW" | "CRITICAL";
   manufacturingDate: string;
   expiryDate: string;
 };
@@ -27,14 +27,14 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
   } = useForm<MedicineFormData>({
     defaultValues: {
       unit: "strips",
-      status: "ok",
+      status: "OK",
       stock: 0,
       price: 0,
     },
   });
 
-  const onFormSubmit = (data: MedicineFormData) => {
-    const newMedicine: Medicine = {
+  const onFormSubmit = async (data: MedicineFormData) => {
+    const newMedicine: Omit<Medicine, 'id'> = {
       name: data.name,
       stock: data.stock,
       unit: data.unit,
@@ -44,7 +44,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       expiryDate: new Date(data.expiryDate),
       status: data.status,
     };
-    onSubmit(newMedicine);
+    await onSubmit(newMedicine);
     reset();
   };
 
@@ -76,8 +76,10 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Stock quantity</label>
           <input
             type="number"
+            min="0"
             {...register("stock", {
               required: "Stock is required",
+              valueAsNumber: true,
               min: { value: 1, message: "Stock must be at least 1" }
             })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
@@ -103,8 +105,10 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Price (₹)</label>
           <input
             type="number"
+            min="0"
             {...register("price", {
               required: "Price is required",
+              valueAsNumber: true, 
               min: { value: 1, message: "Price must be at least 1" }
             })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
@@ -118,9 +122,9 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             {...register("status")}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
-            <option value="ok">OK</option>
-            <option value="low">Low</option>
-            <option value="critical">Critical</option>
+            <option value="OK">OK</option>
+            <option value="LOW">LOW</option>
+            <option value="CRITICAL">CRITICAL</option>
           </select>
         </div>
 

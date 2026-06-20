@@ -1,5 +1,4 @@
 import { useForm } from "react-hook-form";
-import type { Customer } from "../types/customer";
 import { useCustomerStore } from "../store/customerStore";
 
 type CustomerFormData = {
@@ -7,7 +6,7 @@ type CustomerFormData = {
   phoneNumber: string;
   email: string;
   notes: string;
-}
+};
 
 const AddCustomersForm = () => {
   const addCustomer = useCustomerStore((state) => state.addCustomer);
@@ -16,26 +15,21 @@ const AddCustomersForm = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    formState: { errors },
   } = useForm<CustomerFormData>({
     defaultValues: {
       email: "",
       notes: "",
-    }
+    },
   });
 
-  const onFormSubmit = (data: CustomerFormData) => {
-    const newCustomer: Customer = {
-      customerId: `CX${Date.now()}`,
+  const onFormSubmit = async (data: CustomerFormData) => {
+    await addCustomer({
       name: data.name,
       phoneNumber: data.phoneNumber,
       email: data.email,
       notes: data.notes,
-      totalSpend: 0,
-      loyaltyPoints: 0,
-    };
-
-    addCustomer(newCustomer);
+    });
     reset();
   };
 
@@ -51,7 +45,9 @@ const AddCustomersForm = () => {
             placeholder="e.g. Ramesh Shah"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -59,24 +55,36 @@ const AddCustomersForm = () => {
           <input
             {...register("phoneNumber", {
               required: "Phone number is required",
-              pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" }
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: "Enter a valid 10 digit number",
+              },
             })}
             placeholder="e.g. 9876543210"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>}
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.phoneNumber.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Email</label>
           <input
             {...register("email", {
-              pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email" }
+              pattern: {
+                value: /^\S+@\S+\.\S+$/,
+                message: "Enter a valid email",
+              },
             })}
             placeholder="e.g. customerName@gmail.com"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1 col-span-2">

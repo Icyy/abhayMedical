@@ -24,7 +24,7 @@ export const InventoryTable = ({
         </thead>
         <tbody>
           {medicines.map((med) => (
-            <tr className="border-b border-gray-200" key={med.batchNumber}>
+            <tr className="border-b border-gray-200" key={med.id}>
               <td className="p-3 text-sm">{med.name}</td>
               <td className="p-3 text-sm">{med.stock}</td>
               <td className="p-3 text-sm">{med.unit}</td>
@@ -37,7 +37,11 @@ export const InventoryTable = ({
               </td>
               <td className="p-3 text-sm">
                 <button
-                  onClick={() => removeMedicine(med.batchNumber)}
+                  onClick={() => {
+                    if (confirm(`Remove ${med.name}?`)) {
+                      removeMedicine(med.id);
+                    }
+                  }}
                   className="text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-md transition-colors text-xs font-medium"
                 >
                   🗑️ Remove

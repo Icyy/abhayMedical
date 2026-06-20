@@ -1,27 +1,55 @@
 import { create } from "zustand";
 import type { Prescription } from "../types/prescription";
+import { fetchPrescriptions, createPrescription, updatePrescriptionStatusById, deletePrescriptionById } from "../services/prescriptionService";
 
-interface prescriptionStore {
-  prescriptions: Prescription[];
-  addPrescription: (prescription: Prescription) => void;
-  setPrescription: (prescription: Prescription[]) => void;
-  removePrescription: (prescriptionId: string) => void;
-  updatePrescriptionStatus: (prescriptionID: string, status: Prescription['status'])=> void;
+interface PrescriptionPayload {
+  customerPhone: string;
+  customerName: string;
+  doctorName: string;
+  notes: string;
+  discount: number;
+  items: { medicineId: string; quantity: number; price: number }[];
 }
 
-export const usePrescriptionStore = create<prescriptionStore>((set) => ({
+interface PrescriptionStore {
+  prescriptions: Prescription[];
+  isLoading: boolean;
+  error: string | null;
+  loadPrescriptions: () => Promise<void>;
+  addPrescription: (payload: PrescriptionPayload) => Promise<void>;
+  removePrescription: (id: string) => Promise<void>;
+  updatePrescriptionStatus: (id: string, status: Prescription["status"]) => Promise<void>;
+}
+
+export const usePrescriptionStore = create<PrescriptionStore>((set) => ({
   prescriptions: [],
-  addPrescription: (prescription) =>
+  isLoading: false,
+  error: null,
+
+  loadPrescriptions: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const prescriptions = await fetchPrescriptions();
+      set({ prescriptions, isLoading: false });
+    } catch (err) {
+      set({ error: "Failed to load prescriptions", isLoading: false });
+    }
+  },
+
+  addPrescription: async (payload) => {
+    const newPrescription = await createPrescription(payload);
+    set((state) => ({ prescriptions: [...state.prescriptions, newPrescription] }));
+  },
+
+  removePrescription: async (id) => {
+    await deletePrescriptionById(id);
+    set((state) => ({ prescriptions: state.prescriptions.filter((p) => p.id !== id) }));
+  },
+
+  updatePrescriptionStatus: async (id, status) => {
+    const updated = await updatePrescriptionStatusById(id, status);
     set((state) => ({
-      prescriptions: [...state.prescriptions, prescription],
-    })),
-  setPrescription: (prescriptions: Prescription[]) => set({ prescriptions }),
-  removePrescription: (prescriptionId: string) => set((state) => ({
-  prescriptions: state.prescriptions.filter((med) => med.prescriptionId !== prescriptionId)
-})),
-updatePrescriptionStatus: (prescriptionId: string, status: Prescription['status']) => set((state) => ({
-  prescriptions: state.prescriptions.map((presc) =>
-    presc.prescriptionId === prescriptionId ? { ...presc, status } : presc
-  )
-}))
+      prescriptions: state.prescriptions.map((p) => (p.id === id ? updated : p)),
+    }));
+  },
 }));

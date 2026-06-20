@@ -1,5 +1,13 @@
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Package, Users, RefreshCw, FileText } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Package,
+  Users,
+  RefreshCw,
+  FileText,
+  LogOut,
+} from "lucide-react";
+import { logout } from "../services/authService";
 
 const navLinks = [
   { to: "/", label: "Home", icon: LayoutDashboard },
@@ -10,11 +18,22 @@ const navLinks = [
 ];
 
 const SideBar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to log out?")) {
+      logout();
+      navigate("/login");
+    }
+  };
+
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden md:flex w-64 bg-green-800 flex-col p-4">
-        <h1 className="text-white text-lg font-medium px-3 mb-6">Abhay Medical</h1>
+      <div className="hidden md:flex w-64 h-screen bg-green-800 flex-col p-4">
+        <h1 className="text-white text-lg font-medium px-3 mb-6">
+          Abhay Medical
+        </h1>
         {navLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -32,6 +51,13 @@ const SideBar = () => {
             </NavLink>
           );
         })}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 p-3 rounded-lg text-gray-300 hover:text-white mt-auto"
+        >
+          <LogOut size={18} />
+          Logout
+        </button>
       </div>
 
       {/* Mobile bottom nav */}
@@ -53,6 +79,13 @@ const SideBar = () => {
             </NavLink>
           );
         })}
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-1 px-2 py-1 text-gray-400"
+        >
+          <LogOut size={20} />
+          <span className="text-[10px]">Logout</span>
+        </button>
       </div>
     </>
   );
