@@ -86,30 +86,33 @@ const AddPrescriptionForm = () => {
       return;
     }
 
-    await addPrescription({
-      customerPhone: data.customerPhone,
-      customerName: data.customerName,
-      doctorName: data.doctorName,
-      notes: data.notes,
-      discount: data.discount,
-      items: selectedMedicines.map((med) => ({
-        medicineId: med.medicineId,
-        quantity: med.quantity,
-        price: med.price,
-      })),
-    });
+    try {
+      await addPrescription({
+        customerPhone: data.customerPhone,
+        customerName: data.customerName,
+        doctorName: data.doctorName,
+        notes: data.notes,
+        discount: data.discount,
+        items: selectedMedicines.map((med) => ({
+          medicineId: med.medicineId,
+          quantity: med.quantity,
+          price: med.price,
+        })),
+      });
 
-    reset({
-      customerPhone: "",
-      customerName: "",
-      doctorName: "",
-      notes: "",
-      discount: 0,
-    });
-    setSelectedMedicines([]);
-    setMedicineError("");
+      reset({
+        customerName: "",
+        customerPhone: "",
+        doctorName: "",
+        notes: "",
+        discount: 0,
+      });
+      setSelectedMedicines([]);
+      setMedicineError("");
+    } catch (err: any) {
+      setMedicineError(err.message || "Failed to save prescription");
+    }
   };
-
   return (
     <div className="bg-white rounded-lg border border-green-100 p-6 mb-6">
       <h2 className="text-lg font-medium text-green-800 mb-4">
