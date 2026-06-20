@@ -6,6 +6,8 @@ import {
   RefreshCw,
   FileText,
   LogOut,
+  Truck,
+  ClipboardList,
 } from "lucide-react";
 import { logout } from "../services/authService";
 
@@ -13,10 +15,11 @@ const navLinks = [
   { to: "/", label: "Home", icon: LayoutDashboard },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/customers", label: "Customers", icon: Users },
+  { to: "/suppliers", label: "Suppliers", icon: Truck },
+  { to: "/purchase-orders", label: "Orders", icon: ClipboardList },
   { to: "/reorders", label: "Reorders", icon: RefreshCw },
   { to: "/prescriptions", label: "Prescriptions", icon: FileText },
 ];
-
 const SideBar = () => {
   const navigate = useNavigate();
 

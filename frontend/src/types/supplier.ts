@@ -1,0 +1,39 @@
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson: string | null;
+  phone: string;
+  email: string | null;
+  address: string | null;
+  gstNumber: string | null;
+  medicines: SupplierMedicine[];
+  purchaseOrders: PurchaseOrder[];
+}
+
+export interface SupplierMedicine {
+  id: string;
+  supplierId: string;
+  medicineName: string;
+  pricePerUnit: number;
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  medicineName: string;
+  quantity: number;
+  pricePerUnit: number;
+  totalPrice: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  supplierId: string;
+  supplier?: Supplier;
+  status: 'PENDING' | 'RECEIVED' | 'CANCELLED';
+  totalCost: number;
+  orderDate: string;
+  expectedDelivery: string | null;
+  receivedDate: string | null;
+  notes: string | null;
+  items: PurchaseOrderItem[];
+}
