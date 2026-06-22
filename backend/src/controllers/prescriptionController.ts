@@ -24,16 +24,14 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
     const { customerPhone, customerName, doctorName, notes, discount, items } =
       req.body;
 
-    // VALIDATE STOCK FIRST, before creating anything
+    // validate stock first
     for (const item of items) {
       const medicine = await prisma.medicine.findUnique({
         where: { id: item.medicineId },
       });
-
       if (!medicine) {
         return res.status(404).json({ error: `Medicine not found` });
       }
-
       if (medicine.stock < item.quantity) {
         return res.status(400).json({
           error: `Insufficient stock for ${medicine.name}. Available: ${medicine.stock}, Requested: ${item.quantity}`,
@@ -41,11 +39,9 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // find or create customer
     let customer = await prisma.customer.findUnique({
       where: { phoneNumber: customerPhone },
     });
-
     if (!customer) {
       customer = await prisma.customer.create({
         data: {
@@ -57,20 +53,37 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // calculate totals
+    // calculate subtotal and GST per item, using each medicine's CURRENT gst rate at sale time
     let subTotal = 0;
+    let gstAmount = 0;
+    const itemsWithGst: {
+      medicineId: string;
+      quantity: number;
+      price: number;
+      gstPercent: number;
+    }[] = [];
+
     for (const item of items) {
       const medicine = await prisma.medicine.findUnique({
         where: { id: item.medicineId },
       });
       if (medicine) {
-        subTotal += medicine.price * item.quantity;
+        const lineTotal = medicine.price * item.quantity;
+        const lineGst = lineTotal * (medicine.gstPercent / 100);
+        subTotal += lineTotal;
+        gstAmount += lineGst;
+        itemsWithGst.push({
+          medicineId: item.medicineId,
+          quantity: item.quantity,
+          price: item.price,
+          gstPercent: medicine.gstPercent,
+        });
       }
     }
 
-    const total = subTotal - (subTotal * discount) / 100;
+    const discountedSubTotal = subTotal - (subTotal * discount) / 100;
+    const total = discountedSubTotal + gstAmount;
 
-    // create prescription with items
     const prescription = await prisma.prescription.create({
       data: {
         customerId: customer.id,
@@ -78,30 +91,23 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
         notes,
         discount,
         subTotal,
+        gstAmount,
         total,
         items: {
-          create: items.map(
-            (item: {
-              medicineId: string;
-              quantity: number;
-              price: number;
-            }) => ({
-              medicineId: item.medicineId,
-              quantity: item.quantity,
-              price: item.price,
-            }),
-          ),
+          create: itemsWithGst.map((item) => ({
+            medicineId: item.medicineId,
+            quantity: item.quantity,
+            price: item.price,
+            gstPercent: item.gstPercent,
+          })),
         },
       },
       include: {
         customer: true,
-        items: {
-          include: { medicine: true },
-        },
+        items: { include: { medicine: true } },
       },
     });
 
-    // reduce stock for each medicine (now guaranteed safe, validated above)
     for (const item of items) {
       const medicine = await prisma.medicine.findUnique({
         where: { id: item.medicineId },

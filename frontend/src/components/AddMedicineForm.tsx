@@ -12,6 +12,15 @@ type MedicineFormData = {
   unit: string;
   price: number;
   status: "OK" | "LOW" | "CRITICAL";
+  category:
+    | "ALLOPATHIC"
+    | "AYURVEDIC"
+    | "HOMEOPATHIC"
+    | "VETERINARY"
+    | "COSMETIC"
+    | "SURGICAL"
+    | "OTHER";
+  gstPercent: number;
   manufacturingDate: string;
   expiryDate: string;
 };
@@ -28,15 +37,20 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
     defaultValues: {
       unit: "strips",
       status: "OK",
+      category: "ALLOPATHIC",
+      gstPercent: 0,
       stock: 0,
       price: 0,
     },
   });
 
   const onFormSubmit = async (data: MedicineFormData) => {
+    console.log(data)
     const newMedicine: Omit<Medicine, "id"> = {
       name: data.name,
       stock: data.stock,
+      category: data.category,
+      gstPercent: data.gstPercent,
       unit: data.unit,
       price: data.price,
       batchNumber: data.batchNumber || generateBatchNumber(),
@@ -50,10 +64,11 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       stock: 0,
       unit: "",
       price: 0,
+      gstPercent: 0,
       batchNumber: "",
-      manufacturingDate:"",
-      expiryDate:"",
-      status:"OK",
+      manufacturingDate: "",
+      expiryDate: "",
+      status: "OK",
     });
   };
 
@@ -101,17 +116,41 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Unit</label>
+          <label className="text-sm text-gray-500">Category</label>
           <select
-            {...register("unit")}
+            {...register("category")}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
-            <option value="strips">Strips</option>
-            <option value="bottles">Bottles</option>
-            <option value="capsules">Capsules</option>
-            <option value="vials">Vials</option>
-            <option value="sachets">Sachets</option>
+            <option value="ALLOPATHIC">Allopathic</option>
+            <option value="AYURVEDIC">Ayurvedic</option>
+            <option value="HOMEOPATHIC">Homeopathic</option>
+            <option value="VETERINARY">Veterinary</option>
+            <option value="COSMETIC">Cosmetic</option>
+            <option value="SURGICAL">Surgical</option>
+            <option value="OTHER">Other</option>
           </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-500">GST %</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.5"
+            {...register("gstPercent", {
+              valueAsNumber: true,
+              min: { value: 0, message: "GST cannot be negative" },
+              max: { value: 100, message: "GST cannot exceed 100%" },
+            })}
+            placeholder="e.g. 12"
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+          />
+          {errors.gstPercent && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.gstPercent.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">

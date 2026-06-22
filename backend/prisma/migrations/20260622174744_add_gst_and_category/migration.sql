@@ -1,0 +1,12 @@
+-- CreateEnum
+CREATE TYPE "MedicineCategory" AS ENUM ('ALLOPATHIC', 'AYURVEDIC', 'HOMEOPATHIC', 'VETERINARY', 'COSMETIC', 'SURGICAL', 'OTHER');
+
+-- AlterTable
+ALTER TABLE "Medicine" ADD COLUMN     "category" "MedicineCategory" NOT NULL DEFAULT 'ALLOPATHIC',
+ADD COLUMN     "gstPercent" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "Prescription" ADD COLUMN     "gstAmount" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "PrescriptionItem" ADD COLUMN     "gstPercent" DOUBLE PRECISION NOT NULL DEFAULT 0;

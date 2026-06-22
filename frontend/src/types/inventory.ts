@@ -8,4 +8,6 @@ export interface Medicine {
   batchNumber: string;
   stock: number;
   status: 'OK' | 'LOW' | 'CRITICAL';
+  category: 'ALLOPATHIC' | 'AYURVEDIC' | 'HOMEOPATHIC' | 'VETERINARY' | 'COSMETIC' | 'SURGICAL' | 'OTHER';
+  gstPercent: number;
 }

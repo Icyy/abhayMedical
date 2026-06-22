@@ -25,11 +25,22 @@ model Medicine {
   stock             Int
   batchNumber       String             @unique
   status            MedicineStatus     @default(OK)
+  category          MedicineCategory   @default(ALLOPATHIC)
+  gstPercent        Float              @default(0)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   prescriptionItems PrescriptionItem[]
 }
 
+enum MedicineCategory {
+  ALLOPATHIC
+  AYURVEDIC
+  HOMEOPATHIC
+  VETERINARY
+  COSMETIC
+  SURGICAL
+  OTHER
+}
 model Customer {
   id            String         @id @default(uuid())
   name          String
@@ -50,6 +61,7 @@ model Prescription {
   notes      String?
   discount   Float              @default(0)
   subTotal   Float
+  gstAmount  Float              @default(0)
   total      Float
   status     PrescriptionStatus @default(PENDING)
   date       DateTime           @default(now())
@@ -64,6 +76,7 @@ model PrescriptionItem {
   medicine       Medicine     @relation(fields: [medicineId], references: [id])
   quantity       Int
   price          Float
+  gstPercent     Float        @default(0)
 }
 
 model Supplier {
