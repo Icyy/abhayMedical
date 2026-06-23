@@ -4,10 +4,41 @@ import { AuthRequest } from "../middlewares/authMiddleware";
 
 export const getMedicines = async (req: AuthRequest, res: Response) => {
   try {
-    const medicines = await prisma.medicine.findMany({
-      orderBy: { createdAt: "desc" },
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const category = (req.query.category as string) || "";
+    const status = (req.query.status as string) || "";
+
+    const where: any = {};
+
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+    if (category) {
+      where.category = category;
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [medicines, total] = await Promise.all([
+      prisma.medicine.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.medicine.count({ where }),
+    ]);
+
+    res.json({
+      medicines,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      hasMore: page * limit < total,
     });
-    res.json(medicines);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch medicines" });
   }
@@ -22,7 +53,7 @@ export const addMedicine = async (req: AuthRequest, res: Response) => {
       category,
       manufacturingDate,
       expiryDate,
-      purchasePrice, 
+      purchasePrice,
       price,
       stock,
       batchNumber,

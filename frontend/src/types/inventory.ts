@@ -8,7 +8,18 @@ export interface Medicine {
   purchasePrice: number;
   batchNumber: string;
   stock: number;
-  status: 'OK' | 'LOW' | 'CRITICAL';
-  category: 'ALLOPATHIC' | 'AYURVEDIC' | 'HOMEOPATHIC' | 'VETERINARY' | 'COSMETIC' | 'SURGICAL' | 'OTHER';
+  status: "OK" | "LOW" | "CRITICAL";
+  category:
+    | "ALLOPATHIC"
+    | "AYURVEDIC"
+    | "HOMEOPATHIC"
+    | "VETERINARY"
+    | "SURGICAL"
+    | "COSMETIC"
+    | "PERSONAL_CARE"
+    | "FOOD_SUPPLEMENT"
+    | "BABY_CARE"
+    | "GENERAL_STORE"
+    | "OTHER";
   gstPercent: number;
 }

@@ -18,8 +18,12 @@ type MedicineFormData = {
     | "AYURVEDIC"
     | "HOMEOPATHIC"
     | "VETERINARY"
-    | "COSMETIC"
     | "SURGICAL"
+    | "COSMETIC"
+    | "PERSONAL_CARE"
+    | "FOOD_SUPPLEMENT"
+    | "BABY_CARE"
+    | "GENERAL_STORE"
     | "OTHER";
   gstPercent: number;
   manufacturingDate: string;
@@ -42,7 +46,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       category: "ALLOPATHIC",
       gstPercent: 0,
       stock: 0,
-      purchasePrice:0,
+      purchasePrice: 0,
       price: 0,
     },
   });
@@ -68,7 +72,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       stock: 0,
       unit: "",
       price: 0,
-      purchasePrice:0,
+      purchasePrice: 0,
       gstPercent: 0,
       batchNumber: "",
       manufacturingDate: "",

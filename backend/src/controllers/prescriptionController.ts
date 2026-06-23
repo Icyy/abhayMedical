@@ -140,9 +140,12 @@ export const updatePrescriptionStatus = async (
     const prescription = await prisma.prescription.update({
       where: { id },
       data: { status },
+      include: {
+        customer: true,
+        items: { include: { medicine: true } },
+      },
     });
 
-    // if paid, award loyalty points
     if (status === "PAID") {
       const pointsEarned = Math.floor(prescription.total / 100);
       await prisma.customer.update({
@@ -159,7 +162,6 @@ export const updatePrescriptionStatus = async (
     res.status(500).json({ error: "Failed to update prescription status" });
   }
 };
-
 export const deletePrescription = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;

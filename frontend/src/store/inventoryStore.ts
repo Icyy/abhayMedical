@@ -4,9 +4,12 @@ import { fetchMedicines, createMedicine, deleteMedicineById, updateMedicineStatu
 
 interface InventoryStore {
   medicines: Medicine[]
+  total: number
+  currentPage: number
+  totalPages: number
   isLoading: boolean
   error: string | null
-  loadMedicines: () => Promise<void>
+  loadMedicines: (params?: { page?: number; search?: string; category?: string; status?: string }) => Promise<void>
   addMedicine: (medicine: Omit<Medicine, 'id'>) => Promise<void>
   removeMedicine: (id: string) => Promise<void>
   updateMedicineStatus: (id: string, status: Medicine['status']) => Promise<void>
@@ -14,14 +17,23 @@ interface InventoryStore {
 
 export const useInventoryStore = create<InventoryStore>((set, get) => ({
   medicines: [],
+  total: 0,
+  currentPage: 1,
+  totalPages: 1,
   isLoading: false,
   error: null,
 
-  loadMedicines: async () => {
+  loadMedicines: async (params) => {
     set({ isLoading: true, error: null })
     try {
-      const medicines = await fetchMedicines()
-      set({ medicines, isLoading: false })
+      const response = await fetchMedicines(params)
+      set({
+        medicines: response.medicines,
+        total: response.total,
+        currentPage: response.page,
+        totalPages: response.totalPages,
+        isLoading: false
+      })
     } catch (err) {
       set({ error: 'Failed to load medicines', isLoading: false })
     }
@@ -29,12 +41,15 @@ export const useInventoryStore = create<InventoryStore>((set, get) => ({
 
   addMedicine: async (medicine) => {
     const newMedicine = await createMedicine(medicine)
-    set((state) => ({ medicines: [...state.medicines, newMedicine] }))
+    set((state) => ({ medicines: [newMedicine, ...state.medicines], total: state.total + 1 }))
   },
 
   removeMedicine: async (id) => {
     await deleteMedicineById(id)
-    set((state) => ({ medicines: state.medicines.filter((med) => med.id !== id) }))
+    set((state) => ({
+      medicines: state.medicines.filter((med) => med.id !== id),
+      total: state.total - 1
+    }))
   },
 
   updateMedicineStatus: async (id, status) => {
