@@ -22,6 +22,7 @@ model Medicine {
   manufacturingDate DateTime
   expiryDate        DateTime
   price             Float
+  purchasePrice     Float              @default(0)
   stock             Int
   batchNumber       String             @unique
   status            MedicineStatus     @default(OK)

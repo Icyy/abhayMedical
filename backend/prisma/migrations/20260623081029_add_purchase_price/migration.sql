@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Medicine" ADD COLUMN     "purchasePrice" DOUBLE PRECISION NOT NULL DEFAULT 0;

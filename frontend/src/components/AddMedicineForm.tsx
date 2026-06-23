@@ -11,6 +11,7 @@ type MedicineFormData = {
   stock: number;
   unit: string;
   price: number;
+  purchasePrice: number;
   status: "OK" | "LOW" | "CRITICAL";
   category:
     | "ALLOPATHIC"
@@ -31,6 +32,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
   const {
     register,
     handleSubmit,
+    getValues,
     reset,
     formState: { errors },
   } = useForm<MedicineFormData>({
@@ -40,18 +42,20 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       category: "ALLOPATHIC",
       gstPercent: 0,
       stock: 0,
+      purchasePrice:0,
       price: 0,
     },
   });
 
   const onFormSubmit = async (data: MedicineFormData) => {
-    console.log(data)
+    console.log(data);
     const newMedicine: Omit<Medicine, "id"> = {
       name: data.name,
       stock: data.stock,
       category: data.category,
       gstPercent: data.gstPercent,
       unit: data.unit,
+      purchasePrice: data.purchasePrice,
       price: data.price,
       batchNumber: data.batchNumber || generateBatchNumber(),
       manufacturingDate: new Date(data.manufacturingDate),
@@ -64,6 +68,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       stock: 0,
       unit: "",
       price: 0,
+      purchasePrice:0,
       gstPercent: 0,
       batchNumber: "",
       manufacturingDate: "",
@@ -152,6 +157,27 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             </p>
           )}
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-500">
+            Purchase price (₹){" "}
+            <span className="text-gray-400">vendor rate</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            {...register("purchasePrice", {
+              valueAsNumber: true,
+              min: { value: 0, message: "Purchase price cannot be negative" },
+            })}
+            placeholder="e.g. 18"
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+          />
+          {errors.purchasePrice && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.purchasePrice.message}
+            </p>
+          )}
+        </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Price (₹)</label>
@@ -188,6 +214,12 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             type="date"
             {...register("manufacturingDate", {
               required: "Manufacturing date is required",
+              validate: (value) => {
+                const today = new Date().toISOString().split("T")[0];
+                return (
+                  value <= today || "Manufacturing date cannot be in the future"
+                );
+              },
             })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
@@ -202,7 +234,18 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">Expiry date</label>
           <input
             type="date"
-            {...register("expiryDate", { required: "Expiry date is required" })}
+            {...register("expiryDate", {
+              required: "Expiry date is required",
+              validate: (value) => {
+                const mfgDate = getValues("manufacturingDate");
+                // Only validate if manufacturing date is already filled
+                if (!mfgDate) return true;
+                return (
+                  value > mfgDate ||
+                  "Expiry date must be after manufacturing date"
+                );
+              },
+            })}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
           {errors.expiryDate && (

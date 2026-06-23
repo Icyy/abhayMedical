@@ -5,6 +5,7 @@ export interface Medicine {
   manufacturingDate: Date;
   expiryDate: Date;
   price: number;
+  purchasePrice: number;
   batchNumber: string;
   stock: number;
   status: 'OK' | 'LOW' | 'CRITICAL';

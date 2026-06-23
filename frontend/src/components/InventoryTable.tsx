@@ -18,6 +18,9 @@ export const InventoryTable = ({
             <th className="text-left p-3 text-sm text-gray-500">Medicine</th>
             <th className="text-left p-3 text-sm text-gray-500">Stock</th>
             <th className="text-left p-3 text-sm text-gray-500">Unit</th>
+            <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+              Margin
+            </th>
             <th className="text-left p-3 text-sm text-gray-500">Status</th>
             <th className="text-left p-3 text-sm text-gray-500">Delete</th>
           </tr>
@@ -28,6 +31,21 @@ export const InventoryTable = ({
               <td className="p-3 text-sm">{med.name}</td>
               <td className="p-3 text-sm">{med.stock}</td>
               <td className="p-3 text-sm">{med.unit}</td>
+              <td className="p-3 text-sm">
+                {med.purchasePrice > 0 ? (
+                  <span
+                    className={`text-xs font-medium ${((med.price - med.purchasePrice) / med.price) * 100 > 20 ? "text-green-700" : "text-amber-700"}`}
+                  >
+                    {(
+                      ((med.price - med.purchasePrice) / med.price) *
+                      100
+                    ).toFixed(1)}
+                    %
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">—</span>
+                )}
+              </td>
               <td className="p-3 text-sm">
                 <span
                   className={`${getStatusClass(med.status)} px-2 py-1 rounded-full text-xs font-medium`}
