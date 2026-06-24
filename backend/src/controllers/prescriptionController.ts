@@ -4,16 +4,43 @@ import { AuthRequest } from "../middlewares/authMiddleware";
 
 export const getPrescriptions = async (req: AuthRequest, res: Response) => {
   try {
-    const prescriptions = await prisma.prescription.findMany({
-      include: {
-        customer: true,
-        items: {
-          include: { medicine: true },
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const status = (req.query.status as string) || "";
+
+    const where: any = {};
+
+    if (search) {
+      where.customer = {
+        name: { contains: search, mode: "insensitive" },
+      };
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [prescriptions, total] = await Promise.all([
+      prisma.prescription.findMany({
+        where,
+        include: {
+          customer: true,
+          items: { include: { medicine: true } },
         },
-      },
-      orderBy: { date: "desc" },
+        orderBy: { date: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.prescription.count({ where }),
+    ]);
+
+    res.json({
+      prescriptions,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      hasMore: page * limit < total,
     });
-    res.json(prescriptions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch prescriptions" });
   }

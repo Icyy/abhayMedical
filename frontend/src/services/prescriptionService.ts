@@ -10,8 +10,24 @@ interface CreatePrescriptionPayload {
   items: { medicineId: string; quantity: number; price: number }[]
 }
 
-export const fetchPrescriptions = (): Promise<Prescription[]> => {
-  return apiRequest('/prescriptions')
+interface PrescriptionsResponse {
+  prescriptions: Prescription[]
+  total: number
+  page: number
+  totalPages: number
+  hasMore: boolean
+}
+
+export const fetchPrescriptions = (params?: {
+  page?: number
+  search?: string
+  status?: string
+}): Promise<PrescriptionsResponse> => {
+  const query = new URLSearchParams()
+  if (params?.page) query.set('page', String(params.page))
+  if (params?.search) query.set('search', params.search)
+  if (params?.status) query.set('status', params.status)
+  return apiRequest(`/prescriptions?${query.toString()}`)
 }
 
 export const createPrescription = (payload: CreatePrescriptionPayload): Promise<Prescription> => {
