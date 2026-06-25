@@ -9,6 +9,7 @@ import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SuppliersPage from "./pages/SuppliersPage";
 import PurchaseOrdersPage from "./pages/PurchaseOrdersPage";
+import ReportsPage from "./pages/ReportsPage";
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
             <Route path="/prescriptions" element={<ProtectedRoute><PrescriptionsPage /></ProtectedRoute>} />
             <Route path="/customers" element={<ProtectedRoute><CustomersPage /></ProtectedRoute>} />
             <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
             <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrdersPage /></ProtectedRoute>} />
             <Route path="/reorders" element={<ProtectedRoute><ReordersPage /></ProtectedRoute>} />
           </Routes>

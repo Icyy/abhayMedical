@@ -1,10 +1,14 @@
-import { useInventoryStore } from "../store/inventoryStore";
-import { getStatusClass } from "../utils/statusHelpers";
+import { useState } from "react"
+import { useInventoryStore } from "../store/inventoryStore"
+import { getStatusClass } from "../utils/statusHelpers"
+import type { Medicine } from "../types/inventory"
+import ReorderModal from "../components/ReorderModal"
 
 const ReordersPage = () => {
-  const medicines = useInventoryStore((state) => state.medicines);
-  const updateMeds = useInventoryStore((state) => state.updateMedicineStatus);
-  const reorders = medicines.filter((med) => med.status === "CRITICAL" || med.status === "LOW");
+  const medicines = useInventoryStore((state) => state.medicines)
+  const loadMedicines = useInventoryStore((state) => state.loadMedicines)
+  const reorders = medicines.filter((med) => med.status === "CRITICAL" || med.status === "LOW")
+  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null)
 
   return (
     <div className="p-6">
@@ -16,49 +20,46 @@ const ReordersPage = () => {
           </span>
         )}
       </div>
+
       {reorders.length === 0 ? (
         <div className="bg-white rounded-lg border border-[#E8E4D9] p-8 text-center">
           <p className="text-sm text-gray-400">All medicines are well stocked! 🎉</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-[#E8E4D9] p-4 overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#E8E4D9]">
-                <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Name</th>
-                <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Stock</th>
-                <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Unit</th>
-                <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Status</th>
-                <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reorders.map((med) => (
-                <tr className="border-b border-[#F1EFE8]" key={med.id}>
-                  <td className="p-3 text-sm">{med.name}</td>
-                  <td className="p-3 text-sm">{med.stock}</td>
-                  <td className="p-3 text-sm">{med.unit}</td>
-                  <td className="p-3 text-sm">
-                    <span className={`${getStatusClass(med.status)} px-2 py-1 rounded-full font-medium text-xs`}>
-                      {med.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-sm">
-                    <button
-                      onClick={() => updateMeds(med.id, "OK")}
-                      className="bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-md text-xs font-medium hover:bg-green-100"
-                    >
-                      Mark as Reordered
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-2">
+          {reorders.map((med) => (
+            <div key={med.id} className="bg-white border border-[#E8E4D9] rounded-lg p-4 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{med.name}</p>
+                <p className="text-xs text-[#8A8678] mt-0.5">
+                  {med.stock} {med.unit} remaining · {med.category}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`${getStatusClass(med.status)} px-2 py-0.5 rounded-full text-xs font-medium`}>
+                  {med.status}
+                </span>
+                <button
+                  onClick={() => setSelectedMedicine(med)}
+                  className="bg-[#0F4C3A] text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-[#0c3b2d]"
+                >
+                  Reorder
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
-    </div>
-  );
-};
 
-export default ReordersPage;
+      {selectedMedicine && (
+        <ReorderModal
+          medicine={selectedMedicine}
+          onClose={() => setSelectedMedicine(null)}
+          onOrderCreated={() => loadMedicines({ page: 1 })}
+        />
+      )}
+    </div>
+  )
+}
+
+export default ReordersPage

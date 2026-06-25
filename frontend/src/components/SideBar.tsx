@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Plus,
   X,
+  BarChart2,
 } from "lucide-react";
 import { logout } from "../services/authService";
 
@@ -27,6 +28,7 @@ const sections: { label: string; links: NavItem[] }[] = [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       { to: "/prescriptions", label: "Prescriptions", icon: FileText },
       { to: "/reorders", label: "Reorders", icon: RefreshCw },
+      { to: "/reports", label: "Reports", icon: BarChart2 },
     ],
   },
   {
@@ -70,7 +72,9 @@ const SideBar = () => {
     }
   };
 
-  const isMoreActive = mobileMoreLinks.some((link) => link.to === location.pathname);
+  const isMoreActive = mobileMoreLinks.some(
+    (link) => link.to === location.pathname,
+  );
 
   return (
     <>
@@ -81,8 +85,12 @@ const SideBar = () => {
             <Plus size={16} strokeWidth={2.5} />
           </div>
           <div>
-            <p className="text-[#F7F5F0] text-sm font-medium leading-tight">Abhay Medical</p>
-            <p className="text-[#9DBBAE] text-[11px] leading-tight">Pharmacy & Gen. Stores</p>
+            <p className="text-[#F7F5F0] text-sm font-medium leading-tight">
+              Abhay Medical
+            </p>
+            <p className="text-[#9DBBAE] text-[11px] leading-tight">
+              Pharmacy & Gen. Stores
+            </p>
           </div>
         </div>
 
