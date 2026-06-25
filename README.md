@@ -2,7 +2,7 @@
 
 A modern pharmacy management dashboard built with React, TypeScript, and Zustand. Built to replace outdated pharmacy software with a clean, fast, and intuitive interface.
 
-> Built for Abhay Medical, Mumbai — a real family pharmacy.
+> Built for Abhay Medical, Ahmednagar — a real family pharmacy.
 
 ---
 
