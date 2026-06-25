@@ -2,7 +2,7 @@
 
 A modern pharmacy management dashboard built with React, TypeScript, and Zustand. Built to replace outdated pharmacy software with a clean, fast, and intuitive interface.
 
-> Built for Abhay Medical, Mumbai — a real family pharmacy.
+> Built for Abhay Medical, Ahilyanagar — a real family pharmacy.
 
 ---
 
@@ -86,15 +86,15 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Roadmap
 
-- [ ] Node.js + Express backend
-- [ ] PostgreSQL database integration
-- [ ] User authentication
-- [ ] React Hook Form validation
+- [x] Node.js + Express backend
+- [x] PostgreSQL database integration
+- [x] User authentication
+- [x] React Hook Form validation
 - [ ] Sales tracking and billing
 - [ ] GST-compliant invoice generation
 - [ ] WhatsApp notifications for customers
-- [ ] Loyalty points and discount system
-- [ ] Mobile responsive design
+- [x] Loyalty points and discount system
+- [x] Mobile responsive design
 - [ ] Deployment on Vercel + Railway
 
 ---
