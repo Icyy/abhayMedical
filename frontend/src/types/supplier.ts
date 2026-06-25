@@ -6,10 +6,10 @@ export interface Supplier {
   email: string | null;
   address: string | null;
   gstNumber: string | null;
+  discountPercent: number;
   medicines: SupplierMedicine[];
   purchaseOrders: PurchaseOrder[];
 }
-
 export interface SupplierMedicine {
   id: string;
   supplierId: string;

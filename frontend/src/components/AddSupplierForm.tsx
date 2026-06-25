@@ -7,6 +7,7 @@ type SupplierFormData = {
   phone: string;
   email: string;
   address: string;
+  discountPercent: number,
   gstNumber: string;
 };
 
@@ -19,13 +20,21 @@ const AddSupplierForm = () => {
     reset,
     formState: { errors },
   } = useForm<SupplierFormData>({
-    defaultValues: { contactPerson: "", email: "", address: "", gstNumber: "" },
+    defaultValues: { contactPerson: "", email: "", address: "", gstNumber: "",discountPercent:0 },
   });
 
   const onFormSubmit = async (data: SupplierFormData) => {
     try {
       await addSupplier(data);
-      reset({ name: "", contactPerson: "", phone: "", email: "", address: "", gstNumber: "" });
+      reset({
+        name: "",
+        contactPerson: "",
+        phone: "",
+        email: "",
+        address: "",
+        discountPercent:0,
+        gstNumber: "",
+      });
     } catch (err: any) {
       alert(err.message || "Failed to add supplier");
     }
@@ -41,7 +50,9 @@ const AddSupplierForm = () => {
             placeholder="e.g. MedPlus Distributors"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          )}
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Contact person</label>
@@ -56,12 +67,17 @@ const AddSupplierForm = () => {
           <input
             {...register("phone", {
               required: "Phone number is required",
-              pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" },
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: "Enter a valid 10 digit number",
+              },
             })}
             placeholder="e.g. 9876543210"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+          {errors.phone && (
+            <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+          )}
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Email</label>
@@ -76,6 +92,27 @@ const AddSupplierForm = () => {
           <input
             {...register("gstNumber")}
             placeholder="e.g. 27AAAAA0000A1Z5"
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-500">
+            Trade discount %
+            <span className="text-gray-400 ml-1">
+              (e.g. 10 means 10% off MRP on all items)
+            </span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.5"
+            {...register("discountPercent", {
+              valueAsNumber: true,
+              min: { value: 0, message: "Cannot be negative" },
+              max: { value: 100, message: "Cannot exceed 100%" },
+            })}
+            placeholder="e.g. 10"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>

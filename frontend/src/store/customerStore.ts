@@ -28,15 +28,16 @@ export const useCustomerStore = create<CustomerStore>((set) => ({
   isLoading: false,
   error: null,
 
-  loadCustomers: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const customers = await fetchCustomers();
-      set({ customers, isLoading: false });
-    } catch (err) {
-      set({ error: "Failed to load customers", isLoading: false });
-    }
-  },
+loadCustomers: async () => {
+  set({ isLoading: true, error: null });
+  try {
+    const response = await fetchCustomers();
+    // response is now { customers: [], total, page, totalPages }
+    set({ customers: response.customers, isLoading: false });
+  } catch (err) {
+    set({ error: "Failed to load customers", isLoading: false });
+  }
+},
 
   addCustomer: async (customer) => {
     const newCustomer = await createCustomer(customer);

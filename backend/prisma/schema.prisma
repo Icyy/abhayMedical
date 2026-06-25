@@ -85,16 +85,17 @@ model PrescriptionItem {
 }
 
 model Supplier {
-  id            String          @id @default(uuid())
-  name          String
-  contactPerson String?
-  phone         String          @unique
-  email         String?
-  address       String?
-  gstNumber     String?
-  createdAt     DateTime        @default(now())
-  purchaseOrders PurchaseOrder[]
-  medicines     SupplierMedicine[]
+  id              String          @id @default(uuid())
+  name            String
+  contactPerson   String?
+  phone           String          @unique
+  email           String?
+  address         String?
+  gstNumber       String?
+  discountPercent Float           @default(0)
+  createdAt       DateTime        @default(now())
+  purchaseOrders  PurchaseOrder[]
+  medicines       SupplierMedicine[]
 }
 
 model SupplierMedicine {
