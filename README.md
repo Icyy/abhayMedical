@@ -86,15 +86,15 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Roadmap
 
-- [ x ] Node.js + Express backend
-- [ x ] PostgreSQL database integration
-- [ x ] User authentication
-- [ x ] React Hook Form validation
+- [x] Node.js + Express backend
+- [x] PostgreSQL database integration
+- [x] User authentication
+- [x] React Hook Form validation
 - [ ] Sales tracking and billing
 - [ ] GST-compliant invoice generation
 - [ ] WhatsApp notifications for customers
-- [ x ] Loyalty points and discount system
-- [ x ] Mobile responsive design
+- [x] Loyalty points and discount system
+- [x] Mobile responsive design
 - [ ] Deployment on Vercel + Railway
 
 ---
