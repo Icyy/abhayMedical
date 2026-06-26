@@ -1,15 +1,14 @@
-import { Response } from 'express'
-import prisma from '../prisma'
-import { AuthRequest } from '../middlewares/authMiddleware'
-
+import { Response } from "express";
+import prisma from "../prisma";
+import { AuthRequest } from "../middlewares/authMiddleware";
 
 export const getDashboardStats = async (req: AuthRequest, res: Response) => {
   try {
-    const today = new Date()
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0))
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999))
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
     const [
       totalMedicines,
@@ -19,35 +18,35 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       todayRevenue,
       monthRevenue,
       totalCustomers,
-      pendingPrescriptions
+      pendingPrescriptions,
     ] = await Promise.all([
       prisma.medicine.count(),
-      prisma.medicine.count({ where: { status: 'LOW' } }),
-      prisma.medicine.count({ where: { status: 'CRITICAL' } }),
+      prisma.medicine.count({ where: { status: "LOW" } }),
+      prisma.medicine.count({ where: { status: "CRITICAL" } }),
       prisma.medicine.count({
         where: {
           expiryDate: {
-            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          }
-        }
+            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          },
+        },
       }),
       prisma.prescription.aggregate({
         where: {
-          status: 'PAID',
-          date: { gte: startOfDay, lte: endOfDay }
+          status: "PAID",
+          date: { gte: startOfDay, lte: endOfDay },
         },
-        _sum: { total: true }
+        _sum: { total: true },
       }),
       prisma.prescription.aggregate({
         where: {
-          status: 'PAID',
-          date: { gte: startOfMonth }
+          status: "PAID",
+          date: { gte: startOfMonth },
         },
-        _sum: { total: true }
+        _sum: { total: true },
       }),
       prisma.customer.count(),
-      prisma.prescription.count({ where: { status: 'PENDING' } })
-    ])
+      prisma.prescription.count({ where: { status: "PENDING" } }),
+    ]);
 
     res.json({
       totalMedicines,
@@ -57,62 +56,72 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       todayRevenue: todayRevenue._sum.total || 0,
       monthRevenue: monthRevenue._sum.total || 0,
       totalCustomers,
-      pendingPrescriptions
-    })
+      pendingPrescriptions,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch dashboard stats' })
+    res.status(500).json({ error: "Failed to fetch dashboard stats" });
   }
-}
+};
 
 export const getSalesReport = async (req: AuthRequest, res: Response) => {
   try {
-    const month = parseInt(req.query.month as string) || new Date().getMonth() + 1
-    const year = parseInt(req.query.year as string) || new Date().getFullYear()
+    const month =
+      parseInt(req.query.month as string) || new Date().getMonth() + 1;
+    const year = parseInt(req.query.year as string) || new Date().getFullYear();
 
-    const startDate = new Date(year, month - 1, 1)
-    const endDate = new Date(year, month, 0, 23, 59, 59)
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
 
     const [prescriptions, dailyRevenue] = await Promise.all([
       prisma.prescription.findMany({
         where: {
           date: { gte: startDate, lte: endDate },
-          status: 'PAID'
+          status: "PAID",
         },
         include: {
           customer: true,
-          items: { include: { medicine: true } }
+          items: { include: { medicine: true } },
         },
-        orderBy: { date: 'desc' }
+        orderBy: { date: "desc" },
       }),
       prisma.prescription.groupBy({
-        by: ['date'],
+        by: ["date"],
         where: {
           date: { gte: startDate, lte: endDate },
-          status: 'PAID'
+          status: "PAID",
         },
         _sum: { total: true },
-        _count: { id: true }
-      })
-    ])
+        _count: { id: true },
+      }),
+    ]);
 
-    const totalRevenue = prescriptions.reduce((sum, p) => sum + p.total, 0)
-    const totalGst = prescriptions.reduce((sum, p) => sum + p.gstAmount, 0)
+    const totalRevenue = prescriptions.reduce(
+      (sum: number, p: any) => sum + p.total,
+      0,
+    );
+    const totalGst = prescriptions.reduce(
+      (sum: number, p: any) => sum + p.gstAmount,
+      0,
+    );
 
-    const medicineRevenue: Record<string, { name: string; quantity: number; revenue: number }> = {}
-    prescriptions.forEach(p => {
-      p.items.forEach(item => {
-        const name = item.medicine.name
+    const medicineRevenue: Record<
+      string,
+      { name: string; quantity: number; revenue: number }
+    > = {};
+    prescriptions.forEach((p: any) => {
+      p.items.forEach((item: any) => {
+        const name = item.medicine.name;
         if (!medicineRevenue[name]) {
-          medicineRevenue[name] = { name, quantity: 0, revenue: 0 }
+          medicineRevenue[name] = { name, quantity: 0, revenue: 0 };
         }
-        medicineRevenue[name].quantity += item.quantity
-        medicineRevenue[name].revenue += item.price * item.quantity
-      })
-    })
+        medicineRevenue[name].quantity += item.quantity;
+        medicineRevenue[name].revenue += item.price * item.quantity;
+      });
+    });
 
     const topMedicines = Object.values(medicineRevenue)
       .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 10)
+      .slice(0, 10);
 
     res.json({
       month,
@@ -121,44 +130,50 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
       totalGst,
       prescriptionCount: prescriptions.length,
       dailyRevenue,
-      topMedicines
-    })
+      topMedicines,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to generate sales report' })
+    res.status(500).json({ error: "Failed to generate sales report" });
   }
-}
+};
 
 export const getPurchaseReport = async (req: AuthRequest, res: Response) => {
   try {
-    const month = parseInt(req.query.month as string) || new Date().getMonth() + 1
-    const year = parseInt(req.query.year as string) || new Date().getFullYear()
-
-    const startDate = new Date(year, month - 1, 1)
-    const endDate = new Date(year, month, 0, 23, 59, 59)
+    const month =
+      parseInt(req.query.month as string) || new Date().getMonth() + 1;
+    const year = parseInt(req.query.year as string) || new Date().getFullYear();
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
 
     const orders = await prisma.purchaseOrder.findMany({
       where: {
         orderDate: { gte: startDate, lte: endDate },
-        status: 'RECEIVED'
+        status: "RECEIVED",
       },
       include: {
         supplier: true,
-        items: true
+        items: true,
       },
-      orderBy: { orderDate: 'desc' }
-    })
+      orderBy: { orderDate: "desc" },
+    });
 
-    const totalSpend = orders.reduce((sum, o) => sum + o.totalCost, 0)
+    const totalSpend = orders.reduce(
+      (sum: number, o: any) => sum + o.totalCost,
+      0,
+    );
 
-    const supplierSpend: Record<string, { name: string; orders: number; spend: number }> = {}
-    orders.forEach(o => {
-      const name = o.supplier?.name || 'Unknown'
+    const supplierSpend: Record<
+      string,
+      { name: string; orders: number; spend: number }
+    > = {};
+    orders.forEach((o: any) => {
+      const name = o.supplier?.name || "Unknown";
       if (!supplierSpend[name]) {
-        supplierSpend[name] = { name, orders: 0, spend: 0 }
+        supplierSpend[name] = { name, orders: 0, spend: 0 };
       }
-      supplierSpend[name].orders += 1
-      supplierSpend[name].spend += o.totalCost
-    })
+      supplierSpend[name].orders += 1;
+      supplierSpend[name].spend += o.totalCost;
+    });
 
     res.json({
       month,
@@ -166,9 +181,11 @@ export const getPurchaseReport = async (req: AuthRequest, res: Response) => {
       totalSpend,
       orderCount: orders.length,
       orders,
-      supplierBreakdown: Object.values(supplierSpend).sort((a, b) => b.spend - a.spend)
-    })
+      supplierBreakdown: Object.values(supplierSpend).sort(
+        (a, b) => b.spend - a.spend,
+      ),
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to generate purchase report' })
+    res.status(500).json({ error: "Failed to generate purchase report" });
   }
-}
+};
