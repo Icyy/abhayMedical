@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Package, CheckCircle, XCircle, Clock } from "lucide-react"
+import { CheckCircle, XCircle, Clock } from "lucide-react"
 import CreatePurchaseOrderForm from "../components/CreatePurchaseOrderForm"
 import CollapsibleSection from "../components/CollapsibleSection"
 import { useSupplierStore } from "../store/supplierStore"

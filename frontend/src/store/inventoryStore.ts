@@ -15,7 +15,7 @@ interface InventoryStore {
   updateMedicineStatus: (id: string, status: Medicine['status']) => Promise<void>
 }
 
-export const useInventoryStore = create<InventoryStore>((set, get) => ({
+export const useInventoryStore = create<InventoryStore>((set, ) => ({
   medicines: [],
   total: 0,
   currentPage: 1,
