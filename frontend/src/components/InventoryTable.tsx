@@ -62,9 +62,9 @@ export const InventoryTable = ({
                   }}
                   className="text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded-md transition-colors text-xs font-medium"
                 >
-                  🗑️ Remove
+                  Remove
                 </button>
-              </td>
+              </td> 
             </tr>
           ))}
         </tbody>
