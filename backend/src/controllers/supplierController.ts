@@ -48,6 +48,10 @@ export const updateSupplier = async (req: AuthRequest, res: Response) => {
     const { id } = req.params
     const data = req.body
 
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
+
     const supplier = await prisma.supplier.update({
       where: { id },
       data
@@ -62,6 +66,9 @@ export const updateSupplier = async (req: AuthRequest, res: Response) => {
 export const deleteSupplier = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
 
     await prisma.supplier.delete({ where: { id } })
 
@@ -75,6 +82,9 @@ export const addSupplierMedicine = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
     const { medicineName, pricePerUnit } = req.body
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
 
     const supplierMedicine = await prisma.supplierMedicine.upsert({
       where: {
@@ -96,6 +106,9 @@ export const addSupplierMedicine = async (req: AuthRequest, res: Response) => {
 export const comparePrices = async (req: AuthRequest, res: Response) => {
   try {
     const { medicineName } = req.params
+    if (typeof medicineName !== "string") {
+      return res.status(400).json({ error: "Invalid medicine name format" });
+    }
 
     const prices = await prisma.supplierMedicine.findMany({
       where: {

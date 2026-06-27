@@ -165,6 +165,10 @@ export const updatePrescriptionStatus = async (
     const { id } = req.params;
     const { status } = req.body;
 
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
+
     const prescription = await prisma.prescription.update({
       where: { id },
       data: { status },
@@ -193,6 +197,10 @@ export const updatePrescriptionStatus = async (
 export const deletePrescription = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
 
     await prisma.prescriptionItem.deleteMany({
       where: { prescriptionId: id },

@@ -93,6 +93,10 @@ export const updateMedicine = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const data = req.body;
 
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
+
     const medicine = await prisma.medicine.update({
       where: { id },
       data: {
@@ -114,9 +118,14 @@ export const deleteMedicine = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
+
     await prisma.medicine.delete({
       where: { id },
     });
+
 
     res.json({ message: "Medicine deleted successfully" });
   } catch (error) {
@@ -128,6 +137,10 @@ export const reduceStock = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { quantity } = req.body;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
 
     const medicine = await prisma.medicine.findUnique({ where: { id } });
 
@@ -154,6 +167,10 @@ export const updateMedicineStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
 
     const medicine = await prisma.medicine.update({
       where: { id },

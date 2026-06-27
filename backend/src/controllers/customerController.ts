@@ -62,6 +62,10 @@ export const updateCustomer = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const data = req.body;
 
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
+
     const customer = await prisma.customer.update({
       where: { id },
       data,
@@ -76,6 +80,10 @@ export const updateCustomer = async (req: AuthRequest, res: Response) => {
 export const deleteCustomer = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
+    if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
 
     await prisma.customer.delete({ where: { id } });
 
