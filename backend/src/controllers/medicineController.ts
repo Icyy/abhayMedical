@@ -1,14 +1,15 @@
 import { Response } from "express";
 import prisma from "../prisma";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import { qs } from "../utils/query";
 
 export const getMedicines = async (req: AuthRequest, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = (req.query.search as string) || "";
-    const category = (req.query.category as string) || "";
-    const status = (req.query.status as string) || "";
+    const page = parseInt(qs(req.query.page)) || 1;
+    const limit = parseInt(qs(req.query.limit)) || 10;
+    const search = qs(req.query.search);
+    const category = qs(req.query.category);
+    const status = qs(req.query.status);
 
     const where: any = {};
 

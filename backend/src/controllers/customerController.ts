@@ -1,12 +1,13 @@
 import { Response } from "express";
 import prisma from "../prisma";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import { qs } from "../utils/query";
 
 export const getCustomers = async (req: AuthRequest, res: Response) => {
   try {
-    const search = (req.query.search as string) || "";
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 50;
+    const search = qs(req.query.search);
+    const page = parseInt(qs(req.query.page)) || 1;
+    const limit = parseInt(qs(req.query.limit)) || 50;
 
     const where: any = {};
     if (search) {
