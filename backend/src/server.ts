@@ -20,13 +20,16 @@ import purchaseOrderRoutes from './routes/purchaseOrderRoutes'
 import reportsRoutes from './routes/reportsRoutes'
 
 dotenv.config()
-
+console.log("🔥 BOOT SEQUENCE STARTED");
 // ==========================================
 // 0. PRISMA V7 POOLER INITIALIZATION
 // ==========================================
 // This connects to your Supabase Pooler (Port 6543)
 const connectionString = process.env.DATABASE_URL
-const pool = new Pool({ connectionString })
+const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false } // Required for Supabase via the Node driver
+});
 const adapter = new PrismaPg(pool)
 
 // Export this instance so your route files can import it!
