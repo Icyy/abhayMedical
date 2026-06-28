@@ -59,10 +59,15 @@ async function main() {
   console.log('✅ Seed complete!')
 }
 
-main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
+main().then(async () => {
+    // Crucial: Disconnect when successful
+    await prisma.$disconnect();
+    process.exit(0); 
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect()
