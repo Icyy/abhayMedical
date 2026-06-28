@@ -13,7 +13,7 @@ import reportsRoutes from "./routes/reportsRoutes";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -48,8 +48,8 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Abhay Medical API is running" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`)
+})
 
 export default app;
