@@ -72,6 +72,19 @@ app.options(/(.*)/, cors())
 // ==========================================
 app.use(express.json({ limit: '10mb' })) // Added limit to prevent giant payload crashes
 
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Force a log to the terminal, even if it's a "silent" error
+  console.error('--- START ERROR LOG ---');
+  console.error('Path:', req.path);
+  console.error('Error Details:', err);
+  console.error('--- END ERROR LOG ---');
+  
+  res.status(500).json({ 
+    message: 'Server Error', 
+    details: err.message || 'Unknown error' 
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', environment: process.env.NODE_ENV })
 })
