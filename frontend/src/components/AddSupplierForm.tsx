@@ -22,7 +22,6 @@ const AddSupplierForm = () => {
   } = useForm<SupplierFormData>({
     defaultValues: { contactPerson: "", email: "", address: "", gstNumber: "",discountPercent:0 },
   });
-
   const onFormSubmit = async (data: SupplierFormData) => {
     try {
       await addSupplier(data);
