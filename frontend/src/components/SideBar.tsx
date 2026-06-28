@@ -57,6 +57,7 @@ const mobileCoreLinks: NavItem[] = [
 const mobileMoreLinks: NavItem[] = [
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/suppliers", label: "Suppliers", icon: Truck },
+  { to: "/reports", label: "Reports", icon: BarChart2 },
   { to: "/purchase-orders", label: "Orders", icon: ClipboardList },
 ];
 
