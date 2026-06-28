@@ -8,10 +8,11 @@ export default defineConfig({
   migrations: {
     seed: "bun·./prisma/seed.ts",
   },
-  datasource: {
+ datasource: {
     adapter: new PrismaPg({
-      connectionString: process.env.DATABASE_URL!,
+      connectionString: process.env.DATABASE_URL!
     }),
     url: process.env.DATABASE_URL!,
+    directUrl: process.env.DIRECT_URL,
   },
 });
