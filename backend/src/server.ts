@@ -116,6 +116,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`)
 })
+server.on('error', (error) => {
+  console.error('Fatal error starting server:', error);
+});
 
 // Graceful shutdown (Prevents database corruption when Render/Railway restarts the server)
 const shutdown = () => {
