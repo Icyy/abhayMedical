@@ -37,6 +37,7 @@ export const prisma = new PrismaClient({ adapter });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+console.log(`starting server on ${PORT}`)
 
 // ==========================================
 // 1. PRODUCTION SECURITY & PROXY SETTINGS
