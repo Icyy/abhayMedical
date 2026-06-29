@@ -20,7 +20,7 @@ import purchaseOrderRoutes from './routes/purchaseOrderRoutes'
 import reportsRoutes from './routes/reportsRoutes'
 
 dotenv.config()
-console.log("🔥 BOOT SEQUENCE STARTED");
+console.log("BOOT SEQUENCE STARTED");
 // ==========================================
 // 0. PRISMA V7 POOLER INITIALIZATION
 // ==========================================
@@ -66,7 +66,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
-      console.error(`🚨 CORS Blocked: ${origin}`)
+      console.error(`CORS Blocked: ${origin}`)
       callback(new Error('Not allowed by CORS'))
     }
   },
@@ -110,7 +110,7 @@ app.use('/api/reports', reportsRoutes)
 // 4. ERROR HANDLING
 // ==========================================
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('🔥 Unhandled error:', err)
+  console.error('Unhandled error:', err)
   const isProd = process.env.NODE_ENV === 'production'
   res.status(500).json({ 
     error: isProd ? 'Internal Server Error' : err.message 
@@ -121,7 +121,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // 5. SERVER STARTUP & GRACEFUL SHUTDOWN
 // ==========================================
 const server = app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })
 server.on('error', (error) => {
   console.error('Fatal error starting server:', error);
@@ -129,7 +129,7 @@ server.on('error', (error) => {
 
 // --- UPDATED: Graceful shutdown now safely disconnects Prisma ---
 const shutdown = async () => { 
-  console.log('🛑 Shutting down server gracefully...')
+  console.log('Shutting down server gracefully...')
   
   try {
     await prisma.$disconnect()
@@ -139,7 +139,7 @@ const shutdown = async () => {
   }
 
   server.close(() => {
-    console.log('✅ HTTP server closed.')
+    console.log('HTTP server closed.')
     process.exit(0)
   })
 }
@@ -148,12 +148,12 @@ process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason)
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
 })
 
 process.on('uncaughtException', (error) => {
-  console.error('🚨 Uncaught Exception:', error)
+  console.error('Uncaught Exception:', error)
   process.exit(1)
 })
 
-export default app
+export default app  
