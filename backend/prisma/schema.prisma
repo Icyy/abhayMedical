@@ -19,6 +19,8 @@ model Medicine {
   id                String             @id @default(uuid())
   name              String
   unit              String
+  unitsPerPack      Int                @default(1)
+  packType          String             @default("strip")
   manufacturingDate DateTime
   expiryDate        DateTime
   price             Float

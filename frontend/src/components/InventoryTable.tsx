@@ -29,7 +29,15 @@ export const InventoryTable = ({
           {medicines.map((med) => (
             <tr className="border-b border-gray-200" key={med.id}>
               <td className="p-3 text-sm">{med.name}</td>
-              <td className="p-3 text-sm">{med.stock}</td>
+              <td className="p-3 text-sm">
+                {med.stock}
+                {med.unitsPerPack > 1 && (
+                  <span className="text-xs text-[#8A8678] ml-1">
+                    ({Math.floor(med.stock / med.unitsPerPack)} {med.packType}
+                    {Math.floor(med.stock / med.unitsPerPack) !== 1 ? "s" : ""})
+                  </span>
+                )}
+              </td>
               <td className="p-3 text-sm">{med.unit}</td>
               <td className="p-3 text-sm">
                 {med.purchasePrice > 0 ? (
@@ -64,7 +72,7 @@ export const InventoryTable = ({
                 >
                   Remove
                 </button>
-              </td> 
+              </td>
             </tr>
           ))}
         </tbody>

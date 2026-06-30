@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import type { Medicine } from "../types/inventory";
+import SimpleDateInput from "./SimpleDateInput";
 
 interface AddMedicineFormProps {
   onSubmit: (medicine: Omit<Medicine, "id">) => Promise<void>;
@@ -8,36 +9,27 @@ interface AddMedicineFormProps {
 type MedicineFormData = {
   name: string;
   batchNumber: string;
-  stock: number;
+  packType: string;
+  unitsPerPack: number;
+  packCount: number;
   unit: string;
   price: number;
   purchasePrice: number;
   status: "OK" | "LOW" | "CRITICAL";
-  category:
-    | "ALLOPATHIC"
-    | "AYURVEDIC"
-    | "HOMEOPATHIC"
-    | "VETERINARY"
-    | "SURGICAL"
-    | "COSMETIC"
-    | "PERSONAL_CARE"
-    | "FOOD_SUPPLEMENT"
-    | "BABY_CARE"
-    | "GENERAL_STORE"
-    | "OTHER";
+  category: Medicine["category"];
   gstPercent: number;
   manufacturingDate: string;
   expiryDate: string;
 };
-
 const generateBatchNumber = () => `BX${Date.now()}`;
 
 const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
   const {
     register,
     handleSubmit,
-    getValues,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<MedicineFormData>({
     defaultValues: {
@@ -45,31 +37,37 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       status: "OK",
       category: "ALLOPATHIC",
       gstPercent: 0,
-      stock: 0,
-      purchasePrice: 0,
-      price: 0,
+      packType: "strip",
+      unitsPerPack: 10,
+      packCount: 0,
+      manufacturingDate: "",
+      expiryDate: "",
     },
   });
+
+  const manufacturingDate = watch("manufacturingDate");
+  const expiryDate = watch("expiryDate");
 
   const onFormSubmit = async (data: MedicineFormData) => {
     console.log(data);
     const newMedicine: Omit<Medicine, "id"> = {
       name: data.name,
-      stock: data.stock,
-      category: data.category,
-      gstPercent: data.gstPercent,
+      stock: data.unitsPerPack * data.packCount,
+      unitsPerPack: data.unitsPerPack,
+      packType: data.packType,
       unit: data.unit,
-      purchasePrice: data.purchasePrice,
       price: data.price,
+      purchasePrice: data.purchasePrice,
       batchNumber: data.batchNumber || generateBatchNumber(),
       manufacturingDate: new Date(data.manufacturingDate),
       expiryDate: new Date(data.expiryDate),
       status: data.status,
+      category: data.category,
+      gstPercent: data.gstPercent,
     };
     await onSubmit(newMedicine);
     reset({
       name: "",
-      stock: 0,
       unit: "",
       price: 0,
       purchasePrice: 0,
@@ -106,22 +104,85 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
+        <SimpleDateInput
+          label="Manufacturing date"
+          value={manufacturingDate}
+          onChange={(date) => setValue("manufacturingDate", date)}
+        />
+
+        <SimpleDateInput
+          label="Expiry date"
+          value={expiryDate}
+          onChange={(date) => setValue("expiryDate", date)}
+        />
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Stock quantity</label>
+          <label className="text-sm text-gray-500">Pack type</label>
+          <select
+            {...register("packType")}
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+          >
+            <option value="strip">Strip (tablets)</option>
+            <option value="bottle">Bottle (syrup/liquid)</option>
+            <option value="tube">Tube</option>
+            <option value="box">Box</option>
+            <option value="piece">Individual piece</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-500">
+            {watch("packType") === "bottle"
+              ? "ML per bottle"
+              : watch("packType") === "strip"
+                ? "Tablets per strip"
+                : "Units per pack"}
+          </label>
+          <input
+            type="number"
+            min="1"
+            {...register("unitsPerPack", {
+              valueAsNumber: true,
+              min: { value: 1, message: "Must be at least 1" },
+            })}
+            placeholder="e.g. 10"
+            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-500">
+            Number of{" "}
+            {watch("packType") === "bottle"
+              ? "bottles"
+              : watch("packType") === "strip"
+                ? "strips"
+                : "packs"}
+          </label>
           <input
             type="number"
             min="0"
-            {...register("stock", {
-              required: "Stock is required",
+            {...register("packCount", {
               valueAsNumber: true,
-              min: { value: 1, message: "Stock must be at least 1" },
+              required: "Required",
+              min: { value: 0, message: "Cannot be negative" },
             })}
+            placeholder="e.g. 15"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.stock && (
-            <p className="text-red-500 text-xs mt-1">{errors.stock.message}</p>
+          {errors.packCount && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.packCount.message}
+            </p>
           )}
+        </div>
+
+        <div className="flex flex-col gap-1 justify-end">
+          <p className="text-xs text-[#8A8678]">Total stock</p>
+          <p className="text-sm font-medium text-gray-900 py-2">
+            {(watch("unitsPerPack") || 0) * (watch("packCount") || 0)}{" "}
+            {watch("packType") === "bottle" ? "ml" : "units"}
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -211,7 +272,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             <option value="CRITICAL">CRITICAL</option>
           </select>
         </div>
-
+        {/* 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Manufacturing date</label>
           <input
@@ -257,7 +318,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
               {errors.expiryDate.message}
             </p>
           )}
-        </div>
+        </div> */}
       </div>
 
       <button

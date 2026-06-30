@@ -2,6 +2,8 @@ export interface Medicine {
   id: string;
   name: string;
   unit: string;
+  unitsPerPack: number;
+  packType: string;
   manufacturingDate: Date;
   expiryDate: Date;
   price: number;
