@@ -1,13 +1,32 @@
 import { create } from "zustand";
 import type { Supplier, PurchaseOrder } from "../types/supplier";
-import { fetchSuppliers, createSupplier, deleteSupplierById } from "../services/supplierService";
-import { fetchPurchaseOrders, createPurchaseOrder, receivePurchaseOrderById, cancelPurchaseOrderById } from "../services/purchaseOrderService";
+import {
+  fetchSuppliers,
+  createSupplier,
+  deleteSupplierById,
+} from "../services/supplierService";
+import {
+  fetchPurchaseOrders,
+  createPurchaseOrder,
+  receivePurchaseOrderById,
+  cancelPurchaseOrderById,
+} from "../services/purchaseOrderService";
 
 interface CreatePurchaseOrderPayload {
   supplierId: string;
   expectedDelivery?: string;
   notes?: string;
-  items: { medicineName: string; batchNumber: string; sellingPrice: number; gstPercent: number; manufacturingDate: string; expiryDate: string;  quantity: number; pricePerUnit: number }[];
+  items: {
+    medicineName: string;
+    quantity: number;
+    pricePerUnit: number;
+    // Make these optional (?) so both simple orders and detailed bills can use this payload
+    batchNumber?: string;
+    sellingPrice?: number;
+    gstPercent?: number;
+    manufacturingDate?: string;
+    expiryDate?: string;
+  }[];
 }
 
 interface SupplierStore {
@@ -17,7 +36,14 @@ interface SupplierStore {
   error: string | null;
   loadSuppliers: () => Promise<void>;
   loadPurchaseOrders: () => Promise<void>;
-  addSupplier: (supplier: { name: string; contactPerson?: string; phone: string; email?: string; address?: string; gstNumber?: string }) => Promise<void>;
+  addSupplier: (supplier: {
+    name: string;
+    contactPerson?: string;
+    phone: string;
+    email?: string;
+    address?: string;
+    gstNumber?: string;
+  }) => Promise<void>;
   removeSupplier: (id: string) => Promise<void>;
   addPurchaseOrder: (payload: CreatePurchaseOrderPayload) => Promise<void>;
   receivePurchaseOrder: (id: string) => Promise<void>;
@@ -67,14 +93,18 @@ export const useSupplierStore = create<SupplierStore>((set) => ({
   receivePurchaseOrder: async (id) => {
     const updated = await receivePurchaseOrderById(id);
     set((state) => ({
-      purchaseOrders: state.purchaseOrders.map((o) => (o.id === id ? updated : o)),
+      purchaseOrders: state.purchaseOrders.map((o) =>
+        o.id === id ? updated : o,
+      ),
     }));
   },
 
   cancelPurchaseOrder: async (id) => {
     const updated = await cancelPurchaseOrderById(id);
     set((state) => ({
-      purchaseOrders: state.purchaseOrders.map((o) => (o.id === id ? updated : o)),
+      purchaseOrders: state.purchaseOrders.map((o) =>
+        o.id === id ? updated : o,
+      ),
     }));
   },
 }));

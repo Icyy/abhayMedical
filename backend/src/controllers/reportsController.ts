@@ -180,7 +180,7 @@ export const getPurchaseReport = async (req: AuthRequest, res: Response) => {
       year,
       totalSpend,
       orderCount: orders.length,
-      orders,
+      orders, 
       supplierBreakdown: Object.values(supplierSpend).sort(
         (a, b) => b.spend - a.spend,
       ),
