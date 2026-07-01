@@ -10,7 +10,8 @@ interface SelectedMedicine {
   medicineId: string
   name: string
   quantity: number
-  price: number
+  pricePerUnit: number
+  unitLabel: string
   availableStock: number
 }
 
@@ -41,12 +42,19 @@ const AddPrescriptionForm = () => {
 
   const recentMedicines = medicines.slice(0, 5)
 
+  // price per individual unit (tablet/ml)
+  const getPricePerUnit = (med: Medicine) =>
+    med.unitsPerPack > 1 ? med.price / med.unitsPerPack : med.price
+
+  const getUnitLabel = (med: Medicine) =>
+    med.packType === 'bottle' ? 'ml' : med.packType === 'strip' ? 'tablets' : 'units'
+
   const handlePhoneBlur = async (phone: string) => {
     if (phone.length !== 10) return
     setIsLookingUp(true)
     try {
-      const customers = await apiRequest(`/customers?search=${phone}`)
-      const match = customers.customers?.find((c: any) => c.phoneNumber === phone)
+      const response = await apiRequest(`/customers?search=${phone}`)
+      const match = response.customers?.find((c: any) => c.phoneNumber === phone)
       if (match) {
         setValue("customerName", match.name)
         setCustomerFound(true)
@@ -69,15 +77,17 @@ const AddPrescriptionForm = () => {
     if (!pendingMedicine) { setMedicineError("Select a medicine first"); return }
     if (pendingQuantity < 1) { setMedicineError("Quantity must be at least 1"); return }
     if (pendingQuantity > pendingMedicine.stock) {
-      setMedicineError(`Only ${pendingMedicine.stock} in stock`)
+      setMedicineError(`Only ${pendingMedicine.stock} ${getUnitLabel(pendingMedicine)} in stock`)
       return
     }
     setMedicineError("")
+    const pricePerUnit = getPricePerUnit(pendingMedicine)
     setSelectedMedicines([...selectedMedicines, {
       medicineId: pendingMedicine.id,
       name: pendingMedicine.name,
       quantity: pendingQuantity,
-      price: pendingMedicine.price,
+      pricePerUnit,
+      unitLabel: getUnitLabel(pendingMedicine),
       availableStock: pendingMedicine.stock,
     }])
     setAutocompleteKey((prev) => prev + 1)
@@ -90,14 +100,24 @@ const AddPrescriptionForm = () => {
   }
 
   const handleQuickAdd = (med: Medicine) => {
+    const pricePerUnit = getPricePerUnit(med)
     setSelectedMedicines((prev) => {
       const existing = prev.find((m) => m.medicineId === med.id)
       if (existing) {
         return prev.map((m) => m.medicineId === med.id ? { ...m, quantity: m.quantity + 1 } : m)
       }
-      return [...prev, { medicineId: med.id, name: med.name, quantity: 1, price: med.price, availableStock: med.stock }]
+      return [...prev, {
+        medicineId: med.id,
+        name: med.name,
+        quantity: 1,
+        pricePerUnit,
+        unitLabel: getUnitLabel(med),
+        availableStock: med.stock
+      }]
     })
   }
+
+  const subtotal = selectedMedicines.reduce((sum, m) => sum + m.pricePerUnit * m.quantity, 0)
 
   const onFormSubmit = async (data: PrescriptionFormData) => {
     if (selectedMedicines.length === 0) { setMedicineError("Add at least one medicine"); return }
@@ -111,7 +131,7 @@ const AddPrescriptionForm = () => {
         items: selectedMedicines.map((med) => ({
           medicineId: med.medicineId,
           quantity: med.quantity,
-          price: med.price,
+          price: med.pricePerUnit, // per-unit price stored in DB
         })),
       })
       reset({ customerName: "", customerPhone: "", doctorName: "", notes: "", discount: 0 })
@@ -221,7 +241,7 @@ const AddPrescriptionForm = () => {
 
         {pendingMedicine && (
           <p className="text-xs text-green-700 mb-2">
-            {pendingMedicine.name} · ₹{pendingMedicine.price} · Stock: {pendingMedicine.stock} — press Enter to add
+            {pendingMedicine.name} · ₹{getPricePerUnit(pendingMedicine).toFixed(2)}/{getUnitLabel(pendingMedicine)} · {pendingMedicine.stock} {getUnitLabel(pendingMedicine)} in stock — press Enter to add
           </p>
         )}
 
@@ -235,7 +255,9 @@ const AddPrescriptionForm = () => {
               <div key={index} className="flex items-center justify-between bg-[#F7F5F0] px-3 py-2 rounded-md">
                 <span className="text-sm text-gray-900">{med.name}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-[#8A8678]">×{med.quantity} · ₹{(med.price * med.quantity).toFixed(2)}</span>
+                  <span className="text-xs text-[#8A8678]">
+                    {med.quantity} {med.unitLabel} × ₹{med.pricePerUnit.toFixed(2)} = ₹{(med.pricePerUnit * med.quantity).toFixed(2)}
+                  </span>
                   <button
                     onClick={() => setSelectedMedicines(selectedMedicines.filter((_, i) => i !== index))}
                     className="text-red-400 hover:text-red-600 text-xs"
@@ -246,7 +268,7 @@ const AddPrescriptionForm = () => {
               </div>
             ))}
             <div className="text-right text-xs text-[#8A8678] mt-1">
-              Subtotal: ₹{selectedMedicines.reduce((sum, m) => sum + m.price * m.quantity, 0).toFixed(2)}
+              Subtotal: ₹{subtotal.toFixed(2)}
             </div>
           </div>
         )}

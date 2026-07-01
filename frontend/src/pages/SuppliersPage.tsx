@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react"
-import { Search, Phone, Mail, MapPin } from "lucide-react"
+import { Search } from "lucide-react"
 import AddSupplierForm from "../components/AddSupplierForm"
 import CollapsibleSection from "../components/CollapsibleSection"
+import SupplierDetailModal from "../components/SupplierDetailModal"
 import { useSupplierStore } from "../store/supplierStore"
+import type { Supplier } from "../types/supplier"
+import { getCurrentUser } from "../services/authService"
 
 const SuppliersPage = () => {
   const suppliers = useSupplierStore((state) => state.suppliers)
@@ -11,6 +14,10 @@ const SuppliersPage = () => {
   const loadSuppliers = useSupplierStore((state) => state.loadSuppliers)
   const removeSupplier = useSupplierStore((state) => state.removeSupplier)
   const [search, setSearch] = useState("")
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
+
+  const user = getCurrentUser()
+  const canEdit = user?.role === 'OWNER' || user?.role === 'ADMIN'
 
   useEffect(() => {
     loadSuppliers()
@@ -48,51 +55,46 @@ const SuppliersPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((s) => (
-            <div key={s.id} className="bg-white border border-[#E8E4D9] rounded-lg p-4">
+            <div
+              key={s.id}
+              className="bg-white border border-[#E8E4D9] rounded-lg p-4 cursor-pointer hover:border-green-300 transition-colors"
+              onClick={() => setSelectedSupplier(s)}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{s.name}</p>
-                  {s.contactPerson && (
-                    <p className="text-xs text-[#8A8678] mt-0.5">{s.contactPerson}</p>
-                  )}
+                  {s.contactPerson && <p className="text-xs text-[#8A8678] mt-0.5">{s.contactPerson}</p>}
                 </div>
-                {s.gstNumber && (
-                  <span className="text-[10px] text-[#8A8678] bg-gray-50 border border-[#E8E4D9] px-2 py-0.5 rounded font-mono">
-                    GST {s.gstNumber}
-                  </span>
-                )}
+                <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                  {s.discountPercent}% discount
+                </span>
               </div>
-              <div className="flex flex-col gap-1 mb-3">
-                {s.phone && (
-                  <div className="flex items-center gap-1.5 text-xs text-[#8A8678]">
-                    <Phone size={12} />
-                    {s.phone}
-                  </div>
-                )}
-                {s.email && (
-                  <div className="flex items-center gap-1.5 text-xs text-[#8A8678]">
-                    <Mail size={12} />
-                    {s.email}
-                  </div>
-                )}
-                {s.address && (
-                  <div className="flex items-center gap-1.5 text-xs text-[#8A8678]">
-                    <MapPin size={12} />
-                    {s.address}
-                  </div>
-                )}
+              <div className="flex flex-col gap-1">
+                {s.phone && <p className="text-xs text-[#8A8678]">📞 {s.phone}</p>}
+                {s.email && <p className="text-xs text-[#8A8678]">✉️ {s.email}</p>}
               </div>
-              <div className="border-t border-[#F1EFE8] pt-3">
-                <button
-                  onClick={() => confirm(`Remove ${s.name}?`) && removeSupplier(s.id)}
-                  className="text-red-400 hover:text-red-600 text-xs"
-                >
-                  Remove supplier
-                </button>
+              <div className="border-t border-[#F1EFE8] pt-3 mt-3 flex justify-between items-center">
+                <p className="text-xs text-[#8A8678]">Click to view details</p>
+                {canEdit && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); confirm(`Remove ${s.name}?`) && removeSupplier(s.id) }}
+                    className="text-red-400 hover:text-red-600 text-xs"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {selectedSupplier && (
+        <SupplierDetailModal
+          supplier={selectedSupplier}
+          onClose={() => setSelectedSupplier(null)}
+          canEdit={canEdit}
+        />
       )}
     </div>
   )
