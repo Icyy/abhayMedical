@@ -77,6 +77,7 @@ const SupplierDetailModal = ({ supplier, onClose, canEdit }: SupplierDetailModal
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <Phone size={14} className="text-[#8A8678]" />
                 {supplier.phone}
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
               </div>
               {supplier.email && (
                 <div className="flex items-center gap-2 text-sm text-gray-700">
