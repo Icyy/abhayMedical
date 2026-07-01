@@ -7,7 +7,7 @@ interface CreatePurchaseOrderPayload {
   supplierId: string;
   expectedDelivery?: string;
   notes?: string;
-  items: { medicineName: string; quantity: number; pricePerUnit: number }[];
+  items: { medicineName: string; batchNumber: string; sellingPrice: number; gstPercent: number; manufacturingDate: string; expiryDate: string;  quantity: number; pricePerUnit: number }[];
 }
 
 interface SupplierStore {

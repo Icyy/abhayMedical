@@ -34,7 +34,7 @@ const PurchaseOrderBillModal = ({ medicine, supplier, estimatedQuantity, onClose
 
   const purchasePrice = medicine.price * (1 - supplier.discountPercent / 100)
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<BillFormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<BillFormData>({
     defaultValues: {
       batchNumber: "",
       quantity: estimatedQuantity,
