@@ -129,8 +129,13 @@ model PurchaseOrderItem {
   purchaseOrderId String
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
   medicineName    String
+  batchNumber     String?
+  manufacturingDate DateTime?
+  expiryDate      DateTime?
   quantity        Int
   pricePerUnit    Float
+  sellingPrice    Float?
+  gstPercent      Float?
   totalPrice      Float
 }
 

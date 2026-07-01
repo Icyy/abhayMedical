@@ -18,13 +18,17 @@ export interface SupplierMedicine {
 }
 
 export interface PurchaseOrderItem {
-  id: string;
-  medicineName: string;
-  quantity: number;
-  pricePerUnit: number;
-  totalPrice: number;
+  id: string
+  medicineName: string
+  batchNumber: string | null
+  manufacturingDate: string | null
+  expiryDate: string | null
+  quantity: number
+  pricePerUnit: number
+  sellingPrice: number | null
+  gstPercent: number | null
+  totalPrice: number
 }
-
 export interface PurchaseOrder {
   id: string;
   supplierId: string;

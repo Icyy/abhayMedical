@@ -22,8 +22,7 @@ export const createPurchaseOrder = async (req: AuthRequest, res: Response) => {
     const { supplierId, expectedDelivery, notes, items } = req.body;
 
     const totalCost = items.reduce(
-      (sum: number, item: { quantity: number; pricePerUnit: number }) =>
-        sum + item.quantity * item.pricePerUnit,
+      (sum: number, item: any) => sum + item.quantity * item.pricePerUnit,
       0,
     );
 
@@ -34,18 +33,19 @@ export const createPurchaseOrder = async (req: AuthRequest, res: Response) => {
         expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
         notes,
         items: {
-          create: items.map(
-            (item: {
-              medicineName: string;
-              quantity: number;
-              pricePerUnit: number;
-            }) => ({
-              medicineName: item.medicineName,
-              quantity: item.quantity,
-              pricePerUnit: item.pricePerUnit,
-              totalPrice: item.quantity * item.pricePerUnit,
-            }),
-          ),
+          create: items.map((item: any) => ({
+            medicineName: item.medicineName,
+            batchNumber: item.batchNumber || null,
+            manufacturingDate: item.manufacturingDate
+              ? new Date(item.manufacturingDate)
+              : null,
+            expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
+            quantity: item.quantity,
+            pricePerUnit: item.pricePerUnit,
+            sellingPrice: item.sellingPrice || null,
+            gstPercent: item.gstPercent || null,
+            totalPrice: item.quantity * item.pricePerUnit,
+          })),
         },
       },
       include: {

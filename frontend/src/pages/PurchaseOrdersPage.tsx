@@ -1,16 +1,17 @@
-import { useEffect } from "react"
-import { CheckCircle, XCircle, Clock } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Package, CheckCircle, XCircle, Clock } from "lucide-react"
 import CreatePurchaseOrderForm from "../components/CreatePurchaseOrderForm"
 import CollapsibleSection from "../components/CollapsibleSection"
+import PurchaseOrderDetailModal from "../components/PurchaseOrderDetailModal"
 import { useSupplierStore } from "../store/supplierStore"
+import type { PurchaseOrder } from "../types/supplier"
 
 const PurchaseOrdersPage = () => {
   const suppliers = useSupplierStore((state) => state.suppliers)
   const purchaseOrders = useSupplierStore((state) => state.purchaseOrders)
   const loadSuppliers = useSupplierStore((state) => state.loadSuppliers)
   const loadPurchaseOrders = useSupplierStore((state) => state.loadPurchaseOrders)
-  const receivePurchaseOrder = useSupplierStore((state) => state.receivePurchaseOrder)
-  const cancelPurchaseOrder = useSupplierStore((state) => state.cancelPurchaseOrder)
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
 
   useEffect(() => {
     loadSuppliers()
@@ -18,9 +19,9 @@ const PurchaseOrdersPage = () => {
   }, [])
 
   const getStatusConfig = (status: string) => {
-    if (status === "RECEIVED") return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-500", label: "Received" }
-    if (status === "CANCELLED") return { icon: XCircle, color: "text-red-500", bg: "bg-red-400", label: "Cancelled" }
-    return { icon: Clock, color: "text-amber-600", bg: "bg-amber-400", label: "Pending" }
+    if (status === "RECEIVED") return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-500" }
+    if (status === "CANCELLED") return { icon: XCircle, color: "text-red-500", bg: "bg-red-400" }
+    return { icon: Clock, color: "text-amber-600", bg: "bg-amber-400" }
   }
 
   return (
@@ -53,15 +54,18 @@ const PurchaseOrdersPage = () => {
                   {!isLast && <div className="w-0.5 bg-[#E8E4D9] flex-1 mt-1 mb-1" />}
                 </div>
 
-                <div className={`bg-white border border-[#E8E4D9] rounded-lg p-4 flex-1 ${!isLast ? "mb-2" : ""}`}>
+                <div
+                  className={`bg-white border border-[#E8E4D9] rounded-lg p-4 flex-1 cursor-pointer hover:border-green-300 transition-colors ${!isLast ? "mb-2" : ""}`}
+                  onClick={() => setSelectedOrder(order)}
+                >
                   <div className="flex items-start justify-between flex-wrap gap-2">
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {supplier?.name || order.supplier?.name || "Unknown supplier"}
                       </p>
                       <p className="text-xs text-[#8A8678] mt-0.5">
-                        {new Date(order.orderDate).toLocaleDateString()}
-                        {order.expectedDelivery && ` · Expected ${new Date(order.expectedDelivery).toLocaleDateString()}`}
+                        {new Date(order.orderDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {order.expectedDelivery && ` · Expected ${new Date(order.expectedDelivery).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`}
                       </p>
                     </div>
                     <div className="text-right">
@@ -75,36 +79,26 @@ const PurchaseOrdersPage = () => {
                       {order.items.map((item, i) => (
                         <span key={i} className="text-[11px] bg-[#F7F5F0] text-[#8A8678] px-2 py-0.5 rounded">
                           {item.medicineName} × {item.quantity}
+                          {item.batchNumber && <span className="text-[10px] ml-1 font-mono">({item.batchNumber})</span>}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  {order.status === "PENDING" && (
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-[#F1EFE8]">
-                      <button
-                        onClick={() => confirm("Mark as received? This will update inventory stock.") && receivePurchaseOrder(order.id)}
-                        className="bg-[#0F4C3A] text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-[#0c3b2d]"
-                      >
-                        Mark Received
-                      </button>
-                      <button
-                        onClick={() => confirm("Cancel this order?") && cancelPurchaseOrder(order.id)}
-                        className="border border-red-200 text-red-500 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-red-50"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-
-                  {order.notes && (
-                    <p className="text-xs text-[#8A8678] mt-2 italic">{order.notes}</p>
-                  )}
+                  <p className="text-[10px] text-[#8A8678] mt-2">Tap to view details</p>
                 </div>
               </div>
             )
           })}
         </div>
+      )}
+
+      {selectedOrder && (
+        <PurchaseOrderDetailModal
+          order={selectedOrder}
+          supplierName={suppliers.find(s => s.id === selectedOrder.supplierId)?.name || "Unknown"}
+          onClose={() => setSelectedOrder(null)}
+        />
       )}
     </div>
   )
