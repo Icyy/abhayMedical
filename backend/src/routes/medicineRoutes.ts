@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getMedicines, addMedicine, updateMedicine, deleteMedicine, reduceStock, updateMedicineStatus } from '../controllers/medicineController'
+import { getMedicines, addMedicine, updateMedicine, deleteMedicine, reduceStock, updateMedicineStatus, addBatch } from '../controllers/medicineController'
 import { authenticate, authorizeRoles } from '../middlewares/authMiddleware'
 
 
@@ -12,5 +12,6 @@ router.put('/:id', authenticate, authorizeRoles('OWNER', 'ADMIN'), updateMedicin
 router.delete('/:id', authenticate, authorizeRoles('OWNER', 'ADMIN'), deleteMedicine)
 router.patch('/:id/reduce-stock', authenticate, reduceStock)
 router.patch('/:id/status', authenticate, updateMedicineStatus)
+router.post('/:id/batches', authenticate, addBatch)
 
 export default router

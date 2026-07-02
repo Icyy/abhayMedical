@@ -52,60 +52,70 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
     const { customerPhone, customerName, doctorName, notes, discount, items } =
       req.body;
 
-    // validate stock first
+    // Validate stock across batches
     for (const item of items) {
-      const medicine = await prisma.medicine.findUnique({
-        where: { id: item.medicineId },
+      const batches = await prisma.medicineBatch.findMany({
+        where: { medicineId: item.medicineId, stockUnits: { gt: 0 } },
+        orderBy: { expiryDate: "asc" },
       });
-      if (!medicine) {
-        return res.status(404).json({ error: `Medicine not found` });
-      }
-      if (medicine.stock < item.quantity) {
+      const totalStock = batches.reduce((sum, b) => sum + b.stockUnits, 0);
+      if (totalStock < item.quantity) {
+        const medicine = await prisma.medicine.findUnique({
+          where: { id: item.medicineId },
+        });
         return res.status(400).json({
-          error: `Insufficient stock for ${medicine.name}. Available: ${medicine.stock}, Requested: ${item.quantity}`,
+          error: `Insufficient stock for ${medicine?.name}. Available: ${totalStock} units, Requested: ${item.quantity}`,
         });
       }
     }
 
-    let customer = await prisma.customer.findUnique({
-      where: { phoneNumber: customerPhone },
-    });
-    if (!customer) {
-      customer = await prisma.customer.create({
-        data: {
-          name: customerName,
-          phoneNumber: customerPhone,
-          email: "",
-          notes: "",
-        },
+    // Find or create customer - walk-in if no phone provided
+    let customer;
+    if (customerPhone && customerPhone.trim()) {
+      customer = await prisma.customer.findUnique({
+        where: { phoneNumber: customerPhone },
       });
+      if (!customer) {
+        customer = await prisma.customer.create({
+          data: {
+            name: customerName || "Walk-in Customer",
+            phoneNumber: customerPhone,
+            email: "",
+            notes: "",
+          },
+        });
+      }
+    } else {
+      // Walk-in sale - find or create generic walk-in customer
+      customer = await prisma.customer.findUnique({
+        where: { phoneNumber: "0000000000" },
+      });
+      if (!customer) {
+        customer = await prisma.customer.create({
+          data: {
+            name: "Walk-in Customer",
+            phoneNumber: "0000000000",
+            email: "",
+            notes:
+              "Generic walk-in customer for sales without customer details",
+          },
+        });
+      }
     }
 
-    // calculate subtotal and GST per item, using each medicine's CURRENT gst rate at sale time
+    // Calculate totals
     let subTotal = 0;
     let gstAmount = 0;
-    const itemsWithGst: {
-      medicineId: string;
-      quantity: number;
-      price: number;
-      gstPercent: number;
-    }[] = [];
 
     for (const item of items) {
       const medicine = await prisma.medicine.findUnique({
         where: { id: item.medicineId },
       });
       if (medicine) {
-        const lineTotal = medicine.price * item.quantity;
+        const lineTotal = item.pricePerUnit * item.quantity;
         const lineGst = lineTotal * (medicine.gstPercent / 100);
         subTotal += lineTotal;
         gstAmount += lineGst;
-        itemsWithGst.push({
-          medicineId: item.medicineId,
-          quantity: item.quantity,
-          price: item.price,
-          gstPercent: medicine.gstPercent,
-        });
       }
     }
 
@@ -122,11 +132,12 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
         gstAmount,
         total,
         items: {
-          create: itemsWithGst.map((item) => ({
+          create: items.map((item: any) => ({
             medicineId: item.medicineId,
             quantity: item.quantity,
-            price: item.price,
-            gstPercent: item.gstPercent,
+            pricePerUnit: item.pricePerUnit,
+            gstPercent: item.gstPercent || 0,
+            sellAsPackOf: item.sellAsPackOf || 1,
           })),
         },
       },
@@ -136,23 +147,27 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // FIFO stock deduction across batches
     for (const item of items) {
-      const medicine = await prisma.medicine.findUnique({
-        where: { id: item.medicineId },
+      const batches = await prisma.medicineBatch.findMany({
+        where: { medicineId: item.medicineId, stockUnits: { gt: 0 } },
+        orderBy: { expiryDate: "asc" },
       });
-      if (medicine) {
-        const newStock = Math.max(0, medicine.stock - item.quantity);
-        const newStatus =
-          newStock === 0 ? "CRITICAL" : newStock < 10 ? "LOW" : "OK";
-        await prisma.medicine.update({
-          where: { id: item.medicineId },
-          data: { stock: newStock, status: newStatus },
+      let remaining = item.quantity;
+      for (const batch of batches) {
+        if (remaining <= 0) break;
+        const deduct = Math.min(batch.stockUnits, remaining);
+        await prisma.medicineBatch.update({
+          where: { id: batch.id },
+          data: { stockUnits: batch.stockUnits - deduct },
         });
+        remaining -= deduct;
       }
     }
 
     res.status(201).json(prescription);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Failed to create prescription" });
   }
 };

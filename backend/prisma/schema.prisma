@@ -16,23 +16,32 @@ model User {
 }
 
 model Medicine {
-  id                String             @id @default(uuid())
-  name              String
-  unit              String
-  unitsPerPack      Int                @default(1)
-  packType          String             @default("strip")
+  id            String            @id @default(uuid())
+  name          String            @unique
+  unit          String
+  packType      String            @default("strip")
+  unitsPerPack  Int               @default(1)
+  category      MedicineCategory  @default(ALLOPATHIC)
+  gstPercent    Float             @default(0)
+  mrp           Float             @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  batches       MedicineBatch[]
+  prescriptionItems PrescriptionItem[]
+}
+
+model MedicineBatch {
+  id                String    @id @default(uuid())
+  medicineId        String
+  medicine          Medicine  @relation(fields: [medicineId], references: [id])
+  batchNumber       String    @unique
   manufacturingDate DateTime
   expiryDate        DateTime
-  price             Float
-  purchasePrice     Float              @default(0)
-  stock             Int
-  batchNumber       String             @unique
-  status            MedicineStatus     @default(OK)
-  category          MedicineCategory   @default(ALLOPATHIC)
-  gstPercent        Float              @default(0)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  prescriptionItems PrescriptionItem[]
+  purchasePrice     Float     // cost per unit for this delivery
+  stockUnits        Int       // stock in individual units
+  supplierId        String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 enum MedicineCategory {
@@ -74,16 +83,17 @@ model Prescription {
   date       DateTime           @default(now())
   items      PrescriptionItem[]
 }
-
 model PrescriptionItem {
-  id             String       @id @default(uuid())
+  id             String         @id @default(uuid())
   prescriptionId String
-  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  prescription   Prescription   @relation(fields: [prescriptionId], references: [id])
   medicineId     String
-  medicine       Medicine     @relation(fields: [medicineId], references: [id])
-  quantity       Int
-  price          Float
-  gstPercent     Float        @default(0)
+  medicine       Medicine       @relation(fields: [medicineId], references: [id])
+  batchId        String?
+  quantity       Int            // in base units (tablets/ml)
+  pricePerUnit   Float          @default(0)
+  gstPercent     Float          @default(0)
+  sellAsPackOf   Int            @default(1) // 1=per unit, or unitsPerPack=per strip
 }
 
 model Supplier {

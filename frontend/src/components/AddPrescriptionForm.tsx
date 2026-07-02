@@ -12,6 +12,8 @@ interface SelectedMedicine {
   quantity: number
   pricePerUnit: number
   unitLabel: string
+  sellAsPackOf: number
+  lineTotal: number
   availableStock: number
 }
 
@@ -34,20 +36,26 @@ const AddPrescriptionForm = () => {
   const [selectedMedicines, setSelectedMedicines] = useState<SelectedMedicine[]>([])
   const [pendingQuantity, setPendingQuantity] = useState(1)
   const [pendingMedicine, setPendingMedicine] = useState<Medicine | null>(null)
+  const [sellAsPackOf, setSellAsPackOf] = useState(1)
   const [medicineError, setMedicineError] = useState("")
   const [autocompleteKey, setAutocompleteKey] = useState(0)
   const [isLookingUp, setIsLookingUp] = useState(false)
   const [customerFound, setCustomerFound] = useState(false)
+  const [isWalkIn, setIsWalkIn] = useState(false)
   const qtyRef = useRef<HTMLInputElement>(null)
 
   const recentMedicines = medicines.slice(0, 5)
 
-  // price per individual unit (tablet/ml)
-  const getPricePerUnit = (med: Medicine) =>
-    med.unitsPerPack > 1 ? med.price / med.unitsPerPack : med.price
+  const getUnitLabel = (med: Medicine, packOf: number = 1) => {
+    if (packOf > 1) {
+      return med.packType === 'bottle' ? 'bottle' : med.packType === 'strip' ? 'strip' : med.packType
+    }
+    return med.packType === 'bottle' ? 'ml' : med.packType === 'strip' ? 'tablet' : 'unit'
+  }
 
-  const getUnitLabel = (med: Medicine) =>
-    med.packType === 'bottle' ? 'ml' : med.packType === 'strip' ? 'tablets' : 'units'
+  const getPricePerUnit = (med: Medicine, packOf: number = 1) => {
+    return med.mrp * packOf
+  }
 
   const handlePhoneBlur = async (phone: string) => {
     if (phone.length !== 10) return
@@ -70,29 +78,39 @@ const AddPrescriptionForm = () => {
 
   const handleMedicineSelect = (medicine: Medicine) => {
     setPendingMedicine(medicine)
+    setSellAsPackOf(1) // default to per unit
     setTimeout(() => qtyRef.current?.focus(), 50)
   }
 
   const handleAddToList = () => {
     if (!pendingMedicine) { setMedicineError("Select a medicine first"); return }
     if (pendingQuantity < 1) { setMedicineError("Quantity must be at least 1"); return }
-    if (pendingQuantity > pendingMedicine.stock) {
-      setMedicineError(`Only ${pendingMedicine.stock} ${getUnitLabel(pendingMedicine)} in stock`)
+
+    const pricePerUnit = getPricePerUnit(pendingMedicine, sellAsPackOf)
+    const unitLabel = getUnitLabel(pendingMedicine, sellAsPackOf)
+
+    // stock check - quantity is in the sell unit
+    const stockNeeded = pendingQuantity * sellAsPackOf
+    if (stockNeeded > pendingMedicine.stock) {
+      setMedicineError(`Only ${Math.floor(pendingMedicine.stock / sellAsPackOf)} ${unitLabel}(s) available`)
       return
     }
+
     setMedicineError("")
-    const pricePerUnit = getPricePerUnit(pendingMedicine)
     setSelectedMedicines([...selectedMedicines, {
       medicineId: pendingMedicine.id,
       name: pendingMedicine.name,
-      quantity: pendingQuantity,
-      pricePerUnit,
-      unitLabel: getUnitLabel(pendingMedicine),
+      quantity: pendingQuantity * sellAsPackOf, // store in base units
+      pricePerUnit: pendingMedicine.mrp, // always store MRP per base unit
+      unitLabel,
+      sellAsPackOf,
+      lineTotal: pricePerUnit * pendingQuantity,
       availableStock: pendingMedicine.stock,
     }])
     setAutocompleteKey((prev) => prev + 1)
     setPendingMedicine(null)
     setPendingQuantity(1)
+    setSellAsPackOf(1)
   }
 
   const handleQtyKeyDown = (e: React.KeyboardEvent) => {
@@ -100,44 +118,51 @@ const AddPrescriptionForm = () => {
   }
 
   const handleQuickAdd = (med: Medicine) => {
-    const pricePerUnit = getPricePerUnit(med)
     setSelectedMedicines((prev) => {
       const existing = prev.find((m) => m.medicineId === med.id)
       if (existing) {
-        return prev.map((m) => m.medicineId === med.id ? { ...m, quantity: m.quantity + 1 } : m)
+        return prev.map((m) => m.medicineId === med.id ? {
+          ...m,
+          quantity: m.quantity + 1,
+          lineTotal: m.pricePerUnit * (m.quantity + 1)
+        } : m)
       }
       return [...prev, {
         medicineId: med.id,
         name: med.name,
         quantity: 1,
-        pricePerUnit,
-        unitLabel: getUnitLabel(med),
+        pricePerUnit: med.mrp,
+        unitLabel: getUnitLabel(med, 1),
+        sellAsPackOf: 1,
+        lineTotal: med.mrp,
         availableStock: med.stock
       }]
     })
   }
 
-  const subtotal = selectedMedicines.reduce((sum, m) => sum + m.pricePerUnit * m.quantity, 0)
+  const subtotal = selectedMedicines.reduce((sum, m) => sum + m.lineTotal, 0)
 
   const onFormSubmit = async (data: PrescriptionFormData) => {
     if (selectedMedicines.length === 0) { setMedicineError("Add at least one medicine"); return }
     try {
       await addPrescription({
-        customerPhone: data.customerPhone,
-        customerName: data.customerName,
+        customerPhone: isWalkIn ? '' : data.customerPhone,
+        customerName: isWalkIn ? 'Walk-in Customer' : data.customerName,
         doctorName: data.doctorName,
         notes: data.notes,
         discount: data.discount,
         items: selectedMedicines.map((med) => ({
           medicineId: med.medicineId,
           quantity: med.quantity,
-          price: med.pricePerUnit, // per-unit price stored in DB
+          price: med.pricePerUnit,
+          sellAsPackOf: med.sellAsPackOf,
         })),
       })
       reset({ customerName: "", customerPhone: "", doctorName: "", notes: "", discount: 0 })
       setSelectedMedicines([])
       setMedicineError("")
       setCustomerFound(false)
+      setIsWalkIn(false)
     } catch (err: any) {
       setMedicineError(err.message || "Failed to save prescription")
     }
@@ -145,35 +170,53 @@ const AddPrescriptionForm = () => {
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Phone number</label>
-          <div className="relative">
-            <input
-              {...register("customerPhone", {
-                required: "Phone number is required",
-                pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" },
-                onBlur: (e) => handlePhoneBlur(e.target.value)
-              })}
-              placeholder="9876543210"
-              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-            />
-            {isLookingUp && <span className="absolute right-3 top-2.5 text-xs text-gray-400">Looking up...</span>}
-            {customerFound && <span className="absolute right-3 top-2.5 text-xs text-green-600">✓ Found</span>}
+      {/* Walk-in toggle */}
+      <div className="flex items-center gap-3 mb-4 p-3 bg-[#F7F5F0] rounded-lg">
+        <button
+          onClick={() => setIsWalkIn(false)}
+          className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${!isWalkIn ? 'bg-[#0F4C3A] text-white' : 'text-[#8A8678]'}`}
+        >
+          Registered Customer
+        </button>
+        <button
+          onClick={() => setIsWalkIn(true)}
+          className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${isWalkIn ? 'bg-[#0F4C3A] text-white' : 'text-[#8A8678]'}`}
+        >
+          Walk-in / Cash Sale
+        </button>
+      </div>
+
+      {!isWalkIn && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-500">Phone number</label>
+            <div className="relative">
+              <input
+                {...register("customerPhone", {
+                  pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" },
+                  onBlur: (e) => handlePhoneBlur(e.target.value)
+                })}
+                placeholder="9876543210"
+                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+              />
+              {isLookingUp && <span className="absolute right-3 top-2.5 text-xs text-gray-400">Looking up...</span>}
+              {customerFound && <span className="absolute right-3 top-2.5 text-xs text-green-600">✓ Found</span>}
+            </div>
+            {errors.customerPhone && <p className="text-red-500 text-xs mt-1">{errors.customerPhone.message}</p>}
           </div>
-          {errors.customerPhone && <p className="text-red-500 text-xs mt-1">{errors.customerPhone.message}</p>}
-        </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Patient name</label>
-          <input
-            {...register("customerName", { required: "Patient name is required" })}
-            placeholder="e.g. Ramesh Shah"
-            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-          />
-          {errors.customerName && <p className="text-red-500 text-xs mt-1">{errors.customerName.message}</p>}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-500">Patient name <span className="text-[#8A8678]">(optional)</span></label>
+            <input
+              {...register("customerName")}
+              placeholder="e.g. Ramesh Shah"
+              className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+            />
+          </div>
         </div>
+      )}
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">Doctor name <span className="text-gray-400">(optional)</span></label>
           <input
@@ -200,7 +243,7 @@ const AddPrescriptionForm = () => {
       </div>
 
       <div className="border border-gray-100 rounded-lg p-4 mb-4">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Medicines</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3">Items</h3>
 
         {recentMedicines.length > 0 && (
           <div className="mb-3">
@@ -221,6 +264,16 @@ const AddPrescriptionForm = () => {
 
         <div className="flex flex-col sm:flex-row gap-2 mb-2">
           <MedicineAutocomplete key={autocompleteKey} onSelect={handleMedicineSelect} />
+          {pendingMedicine && pendingMedicine.unitsPerPack > 1 && (
+            <select
+              value={sellAsPackOf}
+              onChange={(e) => setSellAsPackOf(Number(e.target.value))}
+              className="w-full sm:w-36 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+            >
+              <option value={1}>Per {getUnitLabel(pendingMedicine, 1)}</option>
+              <option value={pendingMedicine.unitsPerPack}>Per {pendingMedicine.packType}</option>
+            </select>
+          )}
           <input
             ref={qtyRef}
             type="number"
@@ -241,14 +294,22 @@ const AddPrescriptionForm = () => {
 
         {pendingMedicine && (
           <p className="text-xs text-green-700 mb-2">
-            {pendingMedicine.name} · ₹{getPricePerUnit(pendingMedicine).toFixed(2)}/{getUnitLabel(pendingMedicine)} · {pendingMedicine.stock} {getUnitLabel(pendingMedicine)} in stock — press Enter to add
+            {pendingMedicine.name} ·
+            {pendingMedicine.unitsPerPack > 1 ? (
+              sellAsPackOf === 1
+                ? ` ₹${pendingMedicine.mrp.toFixed(2)}/tablet · ${pendingMedicine.stock} tablets available`
+                : ` ₹${(pendingMedicine.mrp * pendingMedicine.unitsPerPack).toFixed(2)}/strip · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} strips available`
+            ) : (
+              ` ₹${pendingMedicine.mrp.toFixed(2)}/unit · ${pendingMedicine.stock} in stock`
+            )}
+            {' · '}press Enter to add
           </p>
         )}
 
         {medicineError && <p className="text-red-500 text-xs mb-2">{medicineError}</p>}
 
         {selectedMedicines.length === 0 ? (
-          <p className="text-sm text-gray-400">No medicines added yet</p>
+          <p className="text-sm text-gray-400">No items added yet</p>
         ) : (
           <div className="flex flex-col gap-1.5">
             {selectedMedicines.map((med, index) => (
@@ -256,7 +317,10 @@ const AddPrescriptionForm = () => {
                 <span className="text-sm text-gray-900">{med.name}</span>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-[#8A8678]">
-                    {med.quantity} {med.unitLabel} × ₹{med.pricePerUnit.toFixed(2)} = ₹{(med.pricePerUnit * med.quantity).toFixed(2)}
+                    {med.sellAsPackOf > 1
+                      ? `${med.quantity / med.sellAsPackOf} ${med.unitLabel}s × ₹${(med.pricePerUnit * med.sellAsPackOf).toFixed(2)}`
+                      : `${med.quantity} ${med.unitLabel}s × ₹${med.pricePerUnit.toFixed(2)}`
+                    } = ₹{med.lineTotal.toFixed(2)}
                   </span>
                   <button
                     onClick={() => setSelectedMedicines(selectedMedicines.filter((_, i) => i !== index))}
@@ -278,7 +342,7 @@ const AddPrescriptionForm = () => {
         onClick={handleSubmit(onFormSubmit)}
         className="bg-[#0F4C3A] hover:bg-[#0c3b2d] text-white text-sm font-medium px-6 py-2.5 rounded-md transition-colors w-full md:w-auto"
       >
-        Save Prescription
+        {isWalkIn ? 'Save Cash Sale' : 'Save Prescription'}
       </button>
     </div>
   )
