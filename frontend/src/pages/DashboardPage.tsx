@@ -19,8 +19,7 @@ const DashboardPage = () => {
   const critical = medicines.filter((med) => med.status === "CRITICAL")
   const lowStock = medicines.filter((med) => med.stock < 10 && med.status !== "CRITICAL")
   const today = new Date()
-  const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
-  const expiryNear = medicines.filter((med) => new Date(med.expiryDate) < in30Days)
+  const expiryNear = medicines.filter((med) => med.expiringBatches > 0)
   const pendingPrescriptions = prescriptions.filter((p) => p.status === "PENDING")
 
   const todaysPaid = prescriptions.filter((p) => {

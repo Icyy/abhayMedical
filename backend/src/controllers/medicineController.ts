@@ -144,9 +144,21 @@ export const deleteMedicine = async (req: AuthRequest, res: Response) => {
   }
 }
 
-export const updateMedicineStatus = async (req: AuthRequest, res: Response) => {
-  // Status is now computed, but keep endpoint for compatibility
-  res.json({ message: 'Status is computed from batches' })
+export const updateMedicine = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params
+    const { name, unit, packType, unitsPerPack, category, gstPercent, mrp } = req.body
+
+    const medicine = await prisma.medicine.update({
+      where: { id },
+      data: { name, unit, packType, unitsPerPack, category, gstPercent, mrp },
+      include: { batches: true }
+    })
+
+    res.json(medicine)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update medicine' })
+  }
 }
 
 export const reduceStock = async (req: AuthRequest, res: Response) => {

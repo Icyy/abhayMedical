@@ -7,52 +7,55 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
-
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     const [
       totalMedicines,
-      lowStockCount,
-      criticalCount,
-      expiringCount,
       todayRevenue,
       monthRevenue,
       totalCustomers,
       pendingPrescriptions,
+      expiringBatches,
     ] = await Promise.all([
       prisma.medicine.count(),
-      prisma.medicine.count({ where: { status: "LOW" } }),
-      prisma.medicine.count({ where: { status: "CRITICAL" } }),
-      prisma.medicine.count({
-        where: {
-          expiryDate: {
-            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          },
-        },
-      }),
       prisma.prescription.aggregate({
-        where: {
-          status: "PAID",
-          date: { gte: startOfDay, lte: endOfDay },
-        },
+        where: { status: "PAID", date: { gte: startOfDay, lte: endOfDay } },
         _sum: { total: true },
       }),
       prisma.prescription.aggregate({
-        where: {
-          status: "PAID",
-          date: { gte: startOfMonth },
-        },
+        where: { status: "PAID", date: { gte: startOfMonth } },
         _sum: { total: true },
       }),
       prisma.customer.count(),
       prisma.prescription.count({ where: { status: "PENDING" } }),
+      prisma.medicineBatch.count({
+        where: { expiryDate: { lte: in30Days }, stockUnits: { gt: 0 } },
+      }),
     ]);
+
+    // Compute low/critical by aggregating batch stock per medicine
+    const medicinesWithStock = await prisma.medicine.findMany({
+      include: {
+        batches: { where: { stockUnits: { gt: 0 } } },
+      },
+    });
+
+    const LOW_THRESHOLD = 10;
+    let lowStockCount = 0;
+    let criticalCount = 0;
+
+    medicinesWithStock.forEach((med) => {
+      const totalStock = med.batches.reduce((sum, b) => sum + b.stockUnits, 0);
+      if (totalStock === 0) criticalCount++;
+      else if (totalStock < LOW_THRESHOLD * med.unitsPerPack) lowStockCount++;
+    });
 
     res.json({
       totalMedicines,
       lowStockCount,
       criticalCount,
-      expiringCount,
+      expiringCount: expiringBatches,
       todayRevenue: todayRevenue._sum.total || 0,
       monthRevenue: monthRevenue._sum.total || 0,
       totalCustomers,
@@ -76,7 +79,6 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
       prisma.prescription.findMany({
         where: {
           date: { gte: startDate, lte: endDate },
-          status: "PAID",
         },
         include: {
           customer: true,
@@ -88,7 +90,6 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
         by: ["date"],
         where: {
           date: { gte: startDate, lte: endDate },
-          status: "PAID",
         },
         _sum: { total: true },
         _count: { id: true },
@@ -148,7 +149,6 @@ export const getPurchaseReport = async (req: AuthRequest, res: Response) => {
     const orders = await prisma.purchaseOrder.findMany({
       where: {
         orderDate: { gte: startDate, lte: endDate },
-        status: "RECEIVED",
       },
       include: {
         supplier: true,
@@ -180,7 +180,7 @@ export const getPurchaseReport = async (req: AuthRequest, res: Response) => {
       year,
       totalSpend,
       orderCount: orders.length,
-      orders, 
+      orders,
       supplierBreakdown: Object.values(supplierSpend).sort(
         (a, b) => b.spend - a.spend,
       ),

@@ -9,7 +9,7 @@ export default defineConfig({
     adapter: new PrismaPg({
       connectionString: process.env.DATABASE_URL!
     }),
-    url: process.env.DIRECT_URL!,
+    url: process.env.DATABASE_URL!,
     directUrl: process.env.DIRECT_URL,
   },
 })

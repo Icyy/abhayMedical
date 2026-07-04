@@ -19,8 +19,8 @@ export interface Medicine {
   category: 'ALLOPATHIC' | 'AYURVEDIC' | 'HOMEOPATHIC' | 'VETERINARY' | 'SURGICAL' | 'COSMETIC' | 'PERSONAL_CARE' | 'FOOD_SUPPLEMENT' | 'BABY_CARE' | 'GENERAL_STORE' | 'OTHER'
   gstPercent: number
   mrp: number
-  stock: number // computed from batches
-  status: 'OK' | 'LOW' | 'CRITICAL' // computed
+  stock: number
+  status: 'OK' | 'LOW' | 'CRITICAL'
   batches: MedicineBatch[]
   nearestExpiryDate: string | null
   expiringBatches: number

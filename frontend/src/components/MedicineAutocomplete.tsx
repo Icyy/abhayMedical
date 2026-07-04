@@ -25,9 +25,9 @@ const MedicineAutocomplete = ({ onSelect }: MedicineAutocompleteProps) => {
 
   const getUnitLabel = (med: Medicine) => {
     if (med.unitsPerPack > 1) {
-      return `${med.stock} ${med.packType === 'bottle' ? 'ml' : 'tablets'} · ₹${(med.price / med.unitsPerPack).toFixed(2)}/unit`
+      return `${med.stock} ${med.packType === 'bottle' ? 'ml' : 'tablets'} · ₹${(med.mrp / med.unitsPerPack).toFixed(2)}/unit`
     }
-    return `Stock: ${med.stock} · ₹${med.price}`
+    return `Stock: ${med.stock} · ₹${med.mrp}`
   }
 
   return (

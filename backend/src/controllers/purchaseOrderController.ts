@@ -19,12 +19,12 @@ export const getPurchaseOrders = async (req: AuthRequest, res: Response) => {
 
 export const createPurchaseOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const { supplierId, expectedDelivery, notes, items } = req.body
+    const { supplierId, expectedDelivery, notes, items } = req.body;
 
     const totalCost = items.reduce(
       (sum: number, item: any) => sum + item.quantity * item.pricePerUnit,
-      0
-    )
+      0,
+    );
 
     const order = await prisma.purchaseOrder.create({
       data: {
@@ -36,27 +36,29 @@ export const createPurchaseOrder = async (req: AuthRequest, res: Response) => {
           create: items.map((item: any) => ({
             medicineName: item.medicineName,
             batchNumber: item.batchNumber || null,
-            manufacturingDate: item.manufacturingDate ? new Date(item.manufacturingDate) : null,
+            manufacturingDate: item.manufacturingDate
+              ? new Date(item.manufacturingDate)
+              : null,
             expiryDate: item.expiryDate ? new Date(item.expiryDate) : null,
             quantity: item.quantity,
             pricePerUnit: item.pricePerUnit,
             sellingPrice: item.sellingPrice || null,
             gstPercent: item.gstPercent || null,
-            totalPrice: item.quantity * item.pricePerUnit
-          }))
-        }
+            totalPrice: item.quantity * item.pricePerUnit,
+          })),
+        },
       },
       include: {
         supplier: true,
-        items: true
-      }
-    })
+        items: true,
+      },
+    });
 
-    res.status(201).json(order)
+    res.status(201).json(order);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create purchase order' })
+    res.status(500).json({ error: "Failed to create purchase order" });
   }
-}
+};
 
 export const receivePurchaseOrder = async (req: AuthRequest, res: Response) => {
   try {
@@ -98,12 +100,20 @@ export const receivePurchaseOrder = async (req: AuthRequest, res: Response) => {
       });
 
       if (medicine) {
-        const newStock = medicine.stock + item.quantity;
-        const newStatus =
-          newStock === 0 ? "CRITICAL" : newStock < 10 ? "LOW" : "OK";
-        await prisma.medicine.update({
-          where: { id: medicine.id },
-          data: { stock: newStock, status: newStatus },
+        await prisma.medicineBatch.create({
+          data: {
+            medicineId: medicine.id,
+            batchNumber: item.batchNumber || `PO${Date.now()}`,
+            manufacturingDate: item.manufacturingDate
+              ? new Date(item.manufacturingDate)
+              : new Date(),
+            expiryDate: item.expiryDate
+              ? new Date(item.expiryDate)
+              : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            purchasePrice: item.pricePerUnit,
+            stockUnits: item.quantity,
+            supplierId: order.supplierId,
+          },
         });
       }
     }
