@@ -1,5 +1,5 @@
 import { apiRequest } from './api'
-import type { Medicine } from '../types/inventory'
+import type { Medicine, MedicinePayload } from '../types/inventory'
 
 interface MedicinesResponse {
   medicines: Medicine[];
@@ -24,7 +24,7 @@ export const fetchMedicines = (params?: {
   return apiRequest(`/medicines?${query.toString()}`)
 }
 
-export const createMedicine = (medicine: Omit<Medicine, 'id'>): Promise<Medicine> => {
+export const createMedicine = (medicine: MedicinePayload): Promise<Medicine> => {
   return apiRequest('/medicines', {
     method: 'POST',
     body: JSON.stringify(medicine),

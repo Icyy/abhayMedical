@@ -25,3 +25,11 @@ export interface Medicine {
   nearestExpiryDate: string | null
   expiringBatches: number
 }
+
+export type MedicinePayload = Omit<Medicine, 'id' | 'stock' | 'status' | 'batches' | 'nearestExpiryDate' | 'expiringBatches'> & {
+  batchNumber?: string
+  manufacturingDate?: string
+  expiryDate?: string
+  purchasePrice?: number
+  stockUnits?: number
+}

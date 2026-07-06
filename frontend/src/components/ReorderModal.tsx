@@ -30,7 +30,7 @@ const ReorderModal = ({ medicine, onClose, onProceed }: ReorderModalProps) => {
   }, [suppliers])
 
   const selectedSupplier = sortedSuppliers.find((s) => s.id === selectedSupplierId)
-  const getPurchasePrice = (s: Supplier) => medicine.price * (1 - s.discountPercent / 100)
+  const getPurchasePrice = (s: Supplier) => medicine.mrp * (1 - s.discountPercent / 100)
 
   const handleProceed = () => {
     if (!selectedSupplier) return
@@ -48,7 +48,7 @@ const ReorderModal = ({ medicine, onClose, onProceed }: ReorderModalProps) => {
             <h2 className="text-base font-medium text-gray-900">Select Supplier</h2>
             <p className="text-sm text-[#8A8678] mt-0.5">{medicine.name}</p>
             <p className="text-xs text-red-600 mt-1">
-              Current stock: {medicine.stock} units · MRP ₹{medicine.price}
+              Current stock: {medicine.stock} units · MRP ₹{medicine.mrp}
             </p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 ml-4 flex-shrink-0">

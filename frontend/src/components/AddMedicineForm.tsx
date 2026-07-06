@@ -1,16 +1,10 @@
 import { useForm } from "react-hook-form"
 import { useState } from "react"
-import type { Medicine } from "../types/inventory"
+import type { Medicine, MedicinePayload } from "../types/inventory"
 import SimpleDateInput from "./SimpleDateInput"
 
 interface AddMedicineFormProps {
-  onSubmit: (medicine: Omit<Medicine, 'id' | 'stock' | 'status' | 'batches' | 'nearestExpiryDate' | 'expiringBatches'> & {
-    batchNumber?: string
-    manufacturingDate?: string
-    expiryDate?: string
-    purchasePrice?: number
-    stockUnits?: number
-  }) => Promise<void>
+  onSubmit: (medicine: MedicinePayload) => Promise<void>
 }
 
 type MedicineFormData = {
