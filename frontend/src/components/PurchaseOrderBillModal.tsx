@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import SimpleDateInput from "./SimpleDateInput";
 import { useSupplierStore } from "../store/supplierStore";
 import type { Medicine } from "../types/inventory";
@@ -44,6 +44,7 @@ const PurchaseOrderBillModal = ({
     register,
     handleSubmit,
     watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<BillFormData>({
@@ -63,19 +64,12 @@ const PurchaseOrderBillModal = ({
   const pricePerUnit = watch("pricePerUnit") || 0;
   const sellingPrice = watch("sellingPrice") || 0;
   const totalCost = quantity * pricePerUnit;
-  const mfgDate = watch("manufacturingDate");
-  const expDate = watch("expiryDate");
   const margin =
     sellingPrice > 0 && pricePerUnit > 0
       ? (((sellingPrice - pricePerUnit) / sellingPrice) * 100).toFixed(1)
       : "—";
 
   const onFormSubmit = async (data: BillFormData) => {
-    if (!data.manufacturingDate || !data.expiryDate) {
-      alert("Please enter manufacturing and expiry dates");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await addPurchaseOrder({
@@ -103,7 +97,6 @@ const PurchaseOrderBillModal = ({
       setIsSubmitting(false);
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
       <div className="bg-white rounded-t-2xl sm:rounded-lg w-full sm:max-w-lg flex flex-col max-h-[95vh]">
@@ -146,27 +139,45 @@ const PurchaseOrderBillModal = ({
               )}
             </div>
 
-            <SimpleDateInput
-              label="Manufacturing date *"
-              value={mfgDate}
-              onChange={(val: any) => {
-                const dateString =
-                  val?.target?.value !== undefined ? val.target.value : val;
-                setValue("manufacturingDate", dateString, {
-                  shouldValidate: true,
-                });
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Controller
+                name="manufacturingDate"
+                control={control}
+                rules={{ required: "Manufacturing date is required" }}
+                render={({ field }) => (
+                  <SimpleDateInput
+                    label="Manufacturing date *"
+                    value={field.value}
+                    onChange={field.onChange} // React Hook Form fully takes over this component now!
+                  />
+                )}
+              />
+              {errors.manufacturingDate && (
+                <p className="text-red-500 text-xs">
+                  {errors.manufacturingDate.message}
+                </p>
+              )}
+            </div>
 
-            <SimpleDateInput
-              label="Expiry date *"
-              value={expDate}
-              onChange={(val: any) => {
-                const dateString =
-                  val?.target?.value !== undefined ? val.target.value : val;
-                setValue("expiryDate", dateString, { shouldValidate: true });
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Controller
+                name="expiryDate"
+                control={control}
+                rules={{ required: "Expiry date is required" }}
+                render={({ field }) => (
+                  <SimpleDateInput
+                    label="Expiry date *"
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.expiryDate && (
+                <p className="text-red-500 text-xs">
+                  {errors.expiryDate.message}
+                </p>
+              )}
+            </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-xs text-[#8A8678]">
