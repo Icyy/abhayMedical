@@ -45,7 +45,6 @@ const PurchaseOrderBillModal = ({
     handleSubmit,
     watch,
     control,
-    setValue,
     formState: { errors },
   } = useForm<BillFormData>({
     defaultValues: {
