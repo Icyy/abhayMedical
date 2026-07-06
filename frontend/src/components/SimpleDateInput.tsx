@@ -19,12 +19,21 @@ const SimpleDateInput = ({ value, onChange, label }: SimpleDateInputProps) => {
       setYear(y || "")
       setMonth(m || "")
       setDay(d || "")
+    } else {
+      setDay("")
+      setMonth("")
+      setYear("")
     }
   }, [value])
 
+
   const emitChange = (d: string, m: string, y: string) => {
-    if (d.length === 2 && m.length === 2 && y.length === 4) {
-      onChange(`${y}-${m}-${d}`)
+    if (d && m && y) {
+      const cleanD = d.padStart(2, "0")
+      const cleanM = m.padStart(2, "0")
+      onChange(`${y}-${cleanM}-${cleanD}`)
+    } else {
+      onChange("") 
     }
   }
 
@@ -48,6 +57,10 @@ const SimpleDateInput = ({ value, onChange, label }: SimpleDateInputProps) => {
     emitChange(day, month, clean)
   }
 
+  // 3. UX Win: Auto-pad the visual input boxes when the user clicks away
+  const handleBlurDay = () => setDay(prev => prev ? prev.padStart(2, "0") : "")
+  const handleBlurMonth = () => setMonth(prev => prev ? prev.padStart(2, "0") : "")
+
   return (
     <div className="flex flex-col gap-1">
       <label className="text-sm text-gray-500">{label}</label>
@@ -57,6 +70,7 @@ const SimpleDateInput = ({ value, onChange, label }: SimpleDateInputProps) => {
           inputMode="numeric"
           value={day}
           onChange={(e) => handleDay(e.target.value)}
+          onBlur={handleBlurDay}
           placeholder="DD"
           maxLength={2}
           className="w-14 border border-gray-200 rounded-md px-2 py-2 text-sm text-center focus:outline-none focus:border-green-400"
@@ -68,6 +82,7 @@ const SimpleDateInput = ({ value, onChange, label }: SimpleDateInputProps) => {
           inputMode="numeric"
           value={month}
           onChange={(e) => handleMonth(e.target.value)}
+          onBlur={handleBlurMonth}
           placeholder="MM"
           maxLength={2}
           className="w-14 border border-gray-200 rounded-md px-2 py-2 text-sm text-center focus:outline-none focus:border-green-400"

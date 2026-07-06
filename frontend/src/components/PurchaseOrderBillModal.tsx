@@ -83,7 +83,7 @@ const PurchaseOrderBillModal = ({
             sellingPrice: data.sellingPrice,
             gstPercent: data.gstPercent,
             manufacturingDate: data.manufacturingDate,
-            expiryDate: data.expiryDate, 
+            expiryDate: data.expiryDate,
           },
         ],
       });
@@ -147,15 +147,10 @@ const PurchaseOrderBillModal = ({
                   <SimpleDateInput
                     label="Manufacturing date *"
                     value={field.value}
-                    onChange={field.onChange} // React Hook Form fully takes over this component now!
+                    onChange={field.onChange}
                   />
                 )}
               />
-              {errors.manufacturingDate && (
-                <p className="text-red-500 text-xs">
-                  {errors.manufacturingDate.message}
-                </p>
-              )}
             </div>
 
             <div className="flex flex-col gap-1">
