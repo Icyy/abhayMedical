@@ -97,11 +97,11 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
     ]);
 
     const totalRevenue = prescriptions.reduce(
-      (sum: number, p: any) => sum + p.total,
+      (sum: number, p: any) => sum + (p.total || 0),
       0,
     );
     const totalGst = prescriptions.reduce(
-      (sum: number, p: any) => sum + p.gstAmount,
+      (sum: number, p: any) => sum + (p.gstAmount || 0),
       0,
     );
 

@@ -121,7 +121,7 @@ export const addMedicine = async (req: AuthRequest, res: Response) => {
       include: { batches: true },
     });
 
-    res.status(201).json(medicine);
+    res.status(201).json(enrichMedicine(medicine))
   } catch (error: any) {
     if (error.code === "P2002") {
       return res
@@ -198,7 +198,7 @@ export const updateMedicine = async (req: AuthRequest, res: Response) => {
       include: { batches: true },
     });
 
-    res.json(medicine);
+    res.json(enrichMedicine(medicine))
   } catch (error) {
     res.status(500).json({ error: "Failed to update medicine" });
   }
@@ -234,3 +234,24 @@ export const reduceStock = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: "Failed to reduce stock" });
   }
 };
+
+const enrichMedicine = (med: any) => {
+  const totalStock = (med.batches || []).reduce((sum: number, b: any) => sum + b.stockUnits, 0)
+  const today = new Date()
+  const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const activeBatches = (med.batches || []).filter((b: any) => b.stockUnits > 0)
+  const nearestExpiry = activeBatches
+    .sort((a: any, b: any) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())[0]
+
+  let computedStatus = 'OK'
+  if (totalStock === 0) computedStatus = 'CRITICAL'
+  else if (totalStock < 10 * (med.unitsPerPack || 1)) computedStatus = 'LOW'
+
+  return {
+    ...med,
+    stock: totalStock,
+    status: computedStatus,
+    nearestExpiryDate: nearestExpiry?.expiryDate || null,
+    expiringBatches: activeBatches.filter((b: any) => new Date(b.expiryDate) < in30Days).length,
+  }
+}

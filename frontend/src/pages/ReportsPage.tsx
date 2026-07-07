@@ -173,24 +173,24 @@ const ReportsPage = () => {
             <div className="bg-white border border-[#E8E4D9] rounded-lg p-4">
               <p className="text-xs text-[#8A8678] mb-1">Total Revenue</p>
               <p className="text-2xl font-medium text-[#0F4C3A]">
-                ₹{salesData.totalRevenue.toFixed(2)}
+                ₹{(salesData.totalRevenue || 0).toFixed(2)}
               </p>
             </div>
             <div className="bg-white border border-[#E8E4D9] rounded-lg p-4">
               <p className="text-xs text-[#8A8678] mb-1">Prescriptions</p>
               <p className="text-2xl font-medium text-gray-900">
-                {salesData.prescriptionCount}
+                {salesData.prescriptionCount || 0}
               </p>
             </div>
             <div className="bg-white border border-[#E8E4D9] rounded-lg p-4">
               <p className="text-xs text-[#8A8678] mb-1">GST Collected</p>
               <p className="text-2xl font-medium text-gray-900">
-                ₹{salesData.totalGst.toFixed(2)}
+                ₹{(salesData.totalGst || 0).toFixed(2)}
               </p>
             </div>
           </div>
 
-          {salesData.topMedicines.length > 0 && (
+          {salesData.topMedicines && salesData.topMedicines.length > 0 ? (
             <div className="bg-white border border-[#E8E4D9] rounded-lg overflow-hidden">
               <div className="px-4 py-3 border-b border-[#E8E4D9]">
                 <h2 className="text-sm font-medium text-gray-900">
@@ -215,11 +215,17 @@ const ReportsPage = () => {
                       </div>
                     </div>
                     <p className="text-sm font-medium text-gray-900">
-                      ₹{med.revenue.toFixed(2)}
+                      ₹{(med.revenue || 0).toFixed(2)}
                     </p>
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-[#E8E4D9] rounded-lg p-6 text-center">
+              <p className="text-sm text-gray-400">
+                No sales data for this month
+              </p>
             </div>
           )}
         </div>

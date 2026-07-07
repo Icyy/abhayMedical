@@ -5,6 +5,8 @@ interface InvoiceModalProps {
   onClose: () => void
 }
 
+const safe = (val: number | undefined | null) => (val || 0).toFixed(2)
+
 const InvoiceModal = ({ prescription, onClose }: InvoiceModalProps) => {
   const saleDateTime = new Date(prescription.date)
 
@@ -21,8 +23,8 @@ const InvoiceModal = ({ prescription, onClose }: InvoiceModalProps) => {
 
         <div className="border-b border-gray-100 pb-4 mb-4">
           <p className="text-xs text-[#8A8678]">Patient</p>
-          <p className="font-medium text-sm">{prescription.customer.name}</p>
-          <p className="text-xs text-[#8A8678]">{prescription.customer.phoneNumber}</p>
+          <p className="font-medium text-sm">{prescription.customer?.name || 'Walk-in Customer'}</p>
+          <p className="text-xs text-[#8A8678]">{prescription.customer?.phoneNumber}</p>
           {prescription.doctorName && (
             <>
               <p className="text-xs text-[#8A8678] mt-2">Doctor</p>
@@ -39,13 +41,13 @@ const InvoiceModal = ({ prescription, onClose }: InvoiceModalProps) => {
 
         <div className="mb-4">
           <p className="text-xs font-medium text-[#8A8678] mb-2 uppercase tracking-wide">Items</p>
-          {prescription.items.map((item) => (
+          {prescription.items?.map((item) => (
             <div key={item.id} className="flex justify-between text-sm py-1.5 border-b border-[#F1EFE8]">
               <div>
-                <p className="text-gray-900">{item.medicine.name}</p>
-                <p className="text-xs text-[#8A8678]">{item.quantity} units × ₹{item.price.toFixed(2)}</p>
+                <p className="text-gray-900">{item.medicine?.name}</p>
+                <p className="text-xs text-[#8A8678]">{item.quantity} units × ₹{safe(item.price)}</p>
               </div>
-              <p className="text-gray-900 font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
+              <p className="text-gray-900 font-medium">₹{safe(item.price * item.quantity)}</p>
             </div>
           ))}
         </div>
@@ -53,23 +55,23 @@ const InvoiceModal = ({ prescription, onClose }: InvoiceModalProps) => {
         <div className="border-t border-gray-100 pt-4 flex flex-col gap-1.5">
           <div className="flex justify-between text-sm">
             <span className="text-[#8A8678]">Subtotal</span>
-            <span>₹{prescription.subTotal.toFixed(2)}</span>
+            <span>₹{safe(prescription.subTotal)}</span>
           </div>
-          {prescription.discount > 0 && (
+          {(prescription.discount || 0) > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-[#8A8678]">Discount ({prescription.discount}%)</span>
-              <span className="text-green-700">-₹{(prescription.subTotal * prescription.discount / 100).toFixed(2)}</span>
+              <span className="text-green-700">-₹{safe((prescription.subTotal || 0) * (prescription.discount || 0) / 100)}</span>
             </div>
           )}
-          {prescription.gstAmount > 0 && (
+          {(prescription.gstAmount || 0) > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-[#8A8678]">GST</span>
-              <span>₹{prescription.gstAmount.toFixed(2)}</span>
+              <span>₹{safe(prescription.gstAmount)}</span>
             </div>
           )}
           <div className="flex justify-between text-base font-medium mt-1 pt-2 border-t border-gray-100">
             <span>Total</span>
-            <span>₹{prescription.total.toFixed(2)}</span>
+            <span>₹{safe(prescription.total)}</span>
           </div>
         </div>
 
