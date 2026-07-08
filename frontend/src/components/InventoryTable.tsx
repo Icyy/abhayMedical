@@ -80,10 +80,10 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
                   <td className="p-3 text-sm text-gray-900">{med.name}</td>
                   <td className="p-3 text-xs text-[#8A8678] font-mono">{getBatchNumbers(med)}</td>
                   <td className="p-3 text-sm text-gray-900">
-                    {med.stock ?? 0}
+                    {(med.stock ?? 0)* med.unitsPerPack}
                     {med.unitsPerPack > 1 && (
                       <span className="text-xs text-[#8A8678] ml-1">
-                        ({Math.floor((med.stock ?? 0) * med.unitsPerPack)} {med.packType}s)
+                        ({Math.floor((med.stock ?? 0) / med.unitsPerPack)} {med.packType}s)
                       </span>
                     )}
                   </td>
