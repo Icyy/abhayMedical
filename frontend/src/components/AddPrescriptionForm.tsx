@@ -297,10 +297,10 @@ const AddPrescriptionForm = () => {
             {pendingMedicine.name} ·
             {pendingMedicine.unitsPerPack > 1 ? (
               sellAsPackOf === 1
-                ? ` ₹${pendingMedicine.mrp.toFixed(2)}/tablet · ${pendingMedicine.stock} tablets available`
-                : ` ₹${(pendingMedicine.mrp * pendingMedicine.unitsPerPack).toFixed(2)}/strip · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} strips available`
+                ? ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/tablet · ${pendingMedicine.stock} tablets available`
+                : ` ₹${(pendingMedicine.mrp * pendingMedicine.unitsPerPack || 0).toFixed(2)}/strip · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} strips available`
             ) : (
-              ` ₹${pendingMedicine.mrp.toFixed(2)}/unit · ${pendingMedicine.stock} in stock`
+              ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/unit · ${pendingMedicine.stock} in stock`
             )}
             {' · '}press Enter to add
           </p>
@@ -318,9 +318,9 @@ const AddPrescriptionForm = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-[#8A8678]">
                     {med.sellAsPackOf > 1
-                      ? `${med.quantity / med.sellAsPackOf} ${med.unitLabel}s × ₹${(med.pricePerUnit * med.sellAsPackOf).toFixed(2)}`
-                      : `${med.quantity} ${med.unitLabel}s × ₹${med.pricePerUnit.toFixed(2)}`
-                    } = ₹{med.lineTotal.toFixed(2)}
+                      ? `${med.quantity / med.sellAsPackOf} ${med.unitLabel}s × ₹${((med.pricePerUnit * med.sellAsPackOf || 0)).toFixed(2)}`
+                      : `${med.quantity} ${med.unitLabel}s × ₹${(med.pricePerUnit || 0).toFixed(2)}`
+                    } = ₹{(med.lineTotal || 0).toFixed(2)}
                   </span>
                   <button
                     onClick={() => setSelectedMedicines(selectedMedicines.filter((_, i) => i !== index))}
@@ -332,7 +332,7 @@ const AddPrescriptionForm = () => {
               </div>
             ))}
             <div className="text-right text-xs text-[#8A8678] mt-1">
-              Subtotal: ₹{subtotal.toFixed(2)}
+              Subtotal: ₹{(subtotal || 0).toFixed(2)}
             </div>
           </div>
         )}

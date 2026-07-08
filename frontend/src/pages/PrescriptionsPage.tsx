@@ -116,7 +116,7 @@ const PrescriptionsPage = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-gray-900">₹{presc.total.toFixed(2)}</span>
+                  <span className="text-sm font-medium text-gray-900">₹{(presc.total || 0 ).toFixed(2)}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getPresStatusClass(presc.status)}`}>
                     {presc.status}
                   </span>
