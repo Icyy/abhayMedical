@@ -83,12 +83,11 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
                     {med.stock ?? 0}
                     {med.unitsPerPack > 1 && (
                       <span className="text-xs text-[#8A8678] ml-1">
-                        ({Math.floor((med.stock ?? 0) / med.unitsPerPack)} {med.packType}s)
+                        ({Math.floor((med.stock ?? 0) * med.unitsPerPack)} {med.packType}s)
                       </span>
                     )}
                   </td>
                   
-                  {/* --- CHANGED: Displays pack price prominently, unit price small --- */}
                   <td className="p-3 text-sm text-gray-900">
                     ₹{(med.mrp || 0).toFixed(2)}
                     {med.unitsPerPack > 1 && (
