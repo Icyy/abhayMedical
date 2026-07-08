@@ -15,11 +15,14 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
     if (!med.batches || med.batches.length === 0) return null
     const activeBatches = med.batches.filter(b => b.stockUnits > 0)
     if (activeBatches.length === 0) return null
-    // use oldest batch (FIFO - what's being sold now)
+    
     const oldestBatch = activeBatches.sort(
       (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
     )[0]
+    
     if (!oldestBatch.purchasePrice || oldestBatch.purchasePrice === 0) return null
+    
+    // Margin calculation remains exactly the same since both MRP and Purchase Price are per pack
     return (((med.mrp - oldestBatch.purchasePrice) / med.mrp) * 100).toFixed(1)
   }
 
@@ -55,7 +58,7 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
               <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Medicine</th>
               <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Batch</th>
               <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Stock</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">MRP/unit</th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">MRP/pack</th> {/* CHANGED LABEL */}
               <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Expiry</th>
               <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Status</th>
               <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Margin</th>
@@ -67,6 +70,7 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
               const margin = getMargin(med)
               const nearestExpiry = getNearestExpiry(med)
               const expiringSoon = isExpiringSoon(nearestExpiry)
+
               return (
                 <tr
                   key={med.id}
@@ -83,9 +87,17 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
                       </span>
                     )}
                   </td>
+                  
+                  {/* --- CHANGED: Displays pack price prominently, unit price small --- */}
                   <td className="p-3 text-sm text-gray-900">
                     ₹{(med.mrp || 0).toFixed(2)}
+                    {med.unitsPerPack > 1 && (
+                      <span className="text-[10px] text-[#8A8678] block mt-0.5">
+                        (₹{(med.mrp / med.unitsPerPack).toFixed(2)}/{med.packType === 'strip' ? 'tab' : 'unit'})
+                      </span>
+                    )}
                   </td>
+
                   <td className="p-3 text-sm">
                     {nearestExpiry ? (
                       <span className={expiringSoon ? "text-red-600 text-xs font-medium" : "text-xs text-[#8A8678]"}>

@@ -53,8 +53,9 @@ const AddPrescriptionForm = () => {
     return med.packType === 'bottle' ? 'ml' : med.packType === 'strip' ? 'tablet' : 'unit'
   }
 
+  // --- CHANGED: Safely converts Pack Price (MRP) to Per-Unit Price ---
   const getPricePerUnit = (med: Medicine, packOf: number = 1) => {
-    return med.mrp * packOf
+    return (med.mrp / med.unitsPerPack) * packOf
   }
 
   const handlePhoneBlur = async (phone: string) => {
@@ -78,7 +79,7 @@ const AddPrescriptionForm = () => {
 
   const handleMedicineSelect = (medicine: Medicine) => {
     setPendingMedicine(medicine)
-    setSellAsPackOf(1) // default to per unit
+    setSellAsPackOf(1) 
     setTimeout(() => qtyRef.current?.focus(), 50)
   }
 
@@ -88,8 +89,7 @@ const AddPrescriptionForm = () => {
 
     const pricePerUnit = getPricePerUnit(pendingMedicine, sellAsPackOf)
     const unitLabel = getUnitLabel(pendingMedicine, sellAsPackOf)
-
-    // stock check - quantity is in the sell unit
+    
     const stockNeeded = pendingQuantity * sellAsPackOf
     if (stockNeeded > pendingMedicine.stock) {
       setMedicineError(`Only ${Math.floor(pendingMedicine.stock / sellAsPackOf)} ${unitLabel}(s) available`)
@@ -97,16 +97,21 @@ const AddPrescriptionForm = () => {
     }
 
     setMedicineError("")
+    
+    // Calculate the pure base unit price to store in the array
+    const baseUnitPrice = pendingMedicine.mrp / pendingMedicine.unitsPerPack
+
     setSelectedMedicines([...selectedMedicines, {
       medicineId: pendingMedicine.id,
       name: pendingMedicine.name,
-      quantity: pendingQuantity * sellAsPackOf, // store in base units
-      pricePerUnit: pendingMedicine.mrp, // always store MRP per base unit
+      quantity: pendingQuantity * sellAsPackOf,
+      pricePerUnit: baseUnitPrice, // CHANGED: Stores per-tablet price
       unitLabel,
       sellAsPackOf,
       lineTotal: pricePerUnit * pendingQuantity,
       availableStock: pendingMedicine.stock,
     }])
+    
     setAutocompleteKey((prev) => prev + 1)
     setPendingMedicine(null)
     setPendingQuantity(1)
@@ -118,6 +123,8 @@ const AddPrescriptionForm = () => {
   }
 
   const handleQuickAdd = (med: Medicine) => {
+    const baseUnitPrice = med.mrp / med.unitsPerPack
+
     setSelectedMedicines((prev) => {
       const existing = prev.find((m) => m.medicineId === med.id)
       if (existing) {
@@ -131,10 +138,10 @@ const AddPrescriptionForm = () => {
         medicineId: med.id,
         name: med.name,
         quantity: 1,
-        pricePerUnit: med.mrp,
+        pricePerUnit: baseUnitPrice, // CHANGED: Stores per-tablet price
         unitLabel: getUnitLabel(med, 1),
         sellAsPackOf: 1,
-        lineTotal: med.mrp,
+        lineTotal: baseUnitPrice,    // CHANGED: Base line total
         availableStock: med.stock
       }]
     })
@@ -264,6 +271,7 @@ const AddPrescriptionForm = () => {
 
         <div className="flex flex-col sm:flex-row gap-2 mb-2">
           <MedicineAutocomplete key={autocompleteKey} onSelect={handleMedicineSelect} />
+          
           {pendingMedicine && pendingMedicine.unitsPerPack > 1 && (
             <select
               value={sellAsPackOf}
@@ -274,6 +282,7 @@ const AddPrescriptionForm = () => {
               <option value={pendingMedicine.unitsPerPack}>Per {pendingMedicine.packType}</option>
             </select>
           )}
+
           <input
             ref={qtyRef}
             type="number"
@@ -292,13 +301,14 @@ const AddPrescriptionForm = () => {
           </button>
         </div>
 
+        {/* --- CHANGED: Adjusts the hint prices based on the new math --- */}
         {pendingMedicine && (
           <p className="text-xs text-green-700 mb-2">
             {pendingMedicine.name} ·
             {pendingMedicine.unitsPerPack > 1 ? (
               sellAsPackOf === 1
-                ? ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/tablet · ${pendingMedicine.stock} tablets available`
-                : ` ₹${(pendingMedicine.mrp * pendingMedicine.unitsPerPack || 0).toFixed(2)}/strip · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} strips available`
+                ? ` ₹${(pendingMedicine.mrp / pendingMedicine.unitsPerPack || 0).toFixed(2)}/tablet · ${pendingMedicine.stock} tablets available`
+                : ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/strip · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} strips available`
             ) : (
               ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/unit · ${pendingMedicine.stock} in stock`
             )}

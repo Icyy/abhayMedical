@@ -85,6 +85,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       purchasePrice: data.purchasePrice,
       stockUnits: data.stockUnits,
     }
+
     await onSubmit(payload)
     reset()
     setMfgDate("")
@@ -94,6 +95,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
   return (
     <div>
       <p className="text-xs text-[#8A8678] uppercase tracking-wide mb-3">Product Details</p>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="flex flex-col gap-1 md:col-span-2">
           <label className="text-sm text-gray-500">Medicine / Product name</label>
@@ -159,11 +161,12 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           />
         </div>
 
+        {/* --- CHANGED: MRP is now per Pack, showing per-unit as a hint --- */}
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">
-            MRP per {getUnitName()} ₹
+            MRP per {getPackLabel()} ₹
             {unitsPerPack > 1 && mrp > 0 && (
-              <span className="text-[#8A8678] ml-1">(₹{(mrp * unitsPerPack).toFixed(2)} per {getPackLabel()})</span>
+              <span className="text-[#8A8678] ml-1">(₹{(mrp / unitsPerPack).toFixed(2)} per {getUnitName()})</span>
             )}
           </label>
           <input
@@ -171,7 +174,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             min={0}
             step={0.01}
             {...register("mrp", { valueAsNumber: true, required: "MRP is required", min: { value: 0.01, message: "Must be greater than 0" } })}
-            placeholder="e.g. 3.00 per tablet"
+            placeholder="e.g. 50.00 per strip"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
           {errors.mrp && <p className="text-red-500 text-xs mt-1">{errors.mrp.message}</p>}
@@ -179,6 +182,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
       </div>
 
       <p className="text-xs text-[#8A8678] uppercase tracking-wide mb-3 mt-2">First Batch / Current Stock</p>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="flex flex-col gap-1 md:col-span-2">
           <label className="text-sm text-gray-500">Batch number</label>
@@ -192,14 +196,15 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         <SimpleDateInput label="Manufacturing date" value={mfgDate} onChange={setMfgDate} />
         <SimpleDateInput label="Expiry date" value={expDate} onChange={setExpDate} />
 
+        {/* --- CHANGED: Purchase price is now per Pack --- */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Purchase price per {getUnitName()} ₹</label>
+          <label className="text-sm text-gray-500">Purchase price per {getPackLabel()} ₹</label>
           <input
             type="number"
             min={0}
             step={0.01}
             {...register("purchasePrice", { valueAsNumber: true })}
-            placeholder="e.g. 2.50 per tablet"
+            placeholder="e.g. 40.00 per strip"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
         </div>
@@ -214,7 +219,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             {...register("stockUnits", {
               valueAsNumber: true,
               setValueAs: (v) => {
-                // convert packs to units
+                // convert packs to units (tablets) for DB storage
                 const packs = parseInt(v) || 0
                 return packs * unitsPerPack
               }
