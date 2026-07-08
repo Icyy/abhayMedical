@@ -15,7 +15,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const MedicineDetailModal = ({ medicine, onClose }: MedicineDetailModalProps) => {
   const packInfo = medicine.unitsPerPack > 1
-    ? `${Math.floor(medicine.stock / medicine.unitsPerPack)} ${medicine.packType}s × ${medicine.unitsPerPack} units`
+    ? `${Math.floor(medicine.stock)} ${medicine.packType}s × ${medicine.unitsPerPack} units`
     : null
 
   return (
