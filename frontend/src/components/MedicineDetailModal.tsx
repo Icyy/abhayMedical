@@ -43,7 +43,7 @@ const MedicineDetailModal = ({ medicine, onClose }: MedicineDetailModalProps) =>
           <div className="flex flex-col gap-0.5">
             <p className="text-xs text-[#8A8678]">Total stock</p>
             <p className="text-sm text-gray-900">
-              {medicine.stock} units
+              {medicine.stock * medicine.unitsPerPack} units
               {packInfo && <span className="text-xs text-[#8A8678] ml-1">({packInfo})</span>}
             </p>
           </div>
