@@ -49,11 +49,11 @@ const MedicineDetailModal = ({ medicine, onClose }: MedicineDetailModalProps) =>
           </div>
           <div className="flex flex-col gap-0.5">
             <p className="text-xs text-[#8A8678]">MRP per unit</p>
-            <p className="text-sm text-gray-900">₹{medicine.mrp.toFixed(2)}</p>
+            <p className="text-sm text-gray-900">₹{(medicine.mrp/medicine.unitsPerPack).toFixed(2)}</p>
           </div>
           <div className="flex flex-col gap-0.5">
             <p className="text-xs text-[#8A8678]">MRP per {medicine.packType}</p>
-            <p className="text-sm text-gray-900">₹{(medicine.mrp * medicine.unitsPerPack).toFixed(2)}</p>
+            <p className="text-sm text-gray-900">₹{(medicine.mrp).toFixed(2)}</p>
           </div>
           <div className="flex flex-col gap-0.5">
             <p className="text-xs text-[#8A8678]">GST %</p>
