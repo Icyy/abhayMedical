@@ -85,7 +85,6 @@ export const addMedicine = async (req: AuthRequest, res: Response) => {
       category,
       gstPercent,
       mrp,
-      // batch details for first delivery
       batchNumber,
       manufacturingDate,
       expiryDate,
@@ -94,39 +93,75 @@ export const addMedicine = async (req: AuthRequest, res: Response) => {
       supplierId,
     } = req.body;
 
-    const medicine = await prisma.medicine.create({
-      data: {
-        name,
-        unit,
-        packType: packType || "strip",
-        unitsPerPack: unitsPerPack || 1,
-        category: category || "ALLOPATHIC",
-        gstPercent: gstPercent || 0,
-        mrp,
-        batches: batchNumber
-          ? {
-              create: [
-                {
-                  batchNumber,
-                  manufacturingDate: new Date(manufacturingDate),
-                  expiryDate: new Date(expiryDate),
-                  purchasePrice,
-                  stockUnits: stockUnits || 0,
-                  supplierId: supplierId || null,
-                },
-              ],
-            }
-          : undefined,
-      },
+    // Check if medicine already exists by name
+    let medicine = await prisma.medicine.findFirst({
+      where: { name: { equals: name, mode: "insensitive" } },
       include: { batches: true },
     });
 
-    res.status(201).json(enrichMedicine(medicine))
+    if (medicine) {
+      // Medicine exists - just add a new batch
+      if (batchNumber) {
+        const existingBatch = await prisma.medicineBatch.findUnique({
+          where: { batchNumber },
+        });
+        if (existingBatch) {
+          return res
+            .status(400)
+            .json({ error: `Batch number ${batchNumber} already exists` });
+        }
+        await prisma.medicineBatch.create({
+          data: {
+            medicineId: medicine.id,
+            batchNumber,
+            manufacturingDate: new Date(manufacturingDate),
+            expiryDate: new Date(expiryDate),
+            purchasePrice,
+            stockUnits: stockUnits || 0,
+            supplierId: supplierId || null,
+          },
+        });
+      }
+      // Update medicine details if provided (mrp may have changed)
+      medicine = await prisma.medicine.update({
+        where: { id: medicine.id },
+        data: { mrp, gstPercent, packType, unitsPerPack, category },
+        include: { batches: true },
+      });
+    } else {
+      // New medicine - create with first batch
+      medicine = await prisma.medicine.create({
+        data: {
+          name,
+          unit,
+          packType: packType || "strip",
+          unitsPerPack: unitsPerPack || 1,
+          category: category || "ALLOPATHIC",
+          gstPercent: gstPercent || 0,
+          mrp,
+          batches: batchNumber
+            ? {
+                create: [
+                  {
+                    batchNumber,
+                    manufacturingDate: new Date(manufacturingDate),
+                    expiryDate: new Date(expiryDate),
+                    purchasePrice,
+                    stockUnits: stockUnits || 0,
+                    supplierId: supplierId || null,
+                  },
+                ],
+              }
+            : undefined,
+        },
+        include: { batches: true },
+      });
+    }
+
+    res.status(201).json(enrichMedicine(medicine));
   } catch (error: any) {
     if (error.code === "P2002") {
-      return res
-        .status(400)
-        .json({ error: "A medicine with this name already exists" });
+      return res.status(400).json({ error: "Batch number already exists" });
     }
     res.status(500).json({ error: "Failed to add medicine" });
   }
@@ -198,7 +233,7 @@ export const updateMedicine = async (req: AuthRequest, res: Response) => {
       include: { batches: true },
     });
 
-    res.json(enrichMedicine(medicine))
+    res.json(enrichMedicine(medicine));
   } catch (error) {
     res.status(500).json({ error: "Failed to update medicine" });
   }
@@ -236,22 +271,31 @@ export const reduceStock = async (req: AuthRequest, res: Response) => {
 };
 
 const enrichMedicine = (med: any) => {
-  const totalStock = (med.batches || []).reduce((sum: number, b: any) => sum + b.stockUnits, 0)
-  const today = new Date()
-  const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
-  const activeBatches = (med.batches || []).filter((b: any) => b.stockUnits > 0)
-  const nearestExpiry = activeBatches
-    .sort((a: any, b: any) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())[0]
+  const totalStock = (med.batches || []).reduce(
+    (sum: number, b: any) => sum + b.stockUnits,
+    0,
+  );
+  const today = new Date();
+  const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const activeBatches = (med.batches || []).filter(
+    (b: any) => b.stockUnits > 0,
+  );
+  const nearestExpiry = activeBatches.sort(
+    (a: any, b: any) =>
+      new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
+  )[0];
 
-  let computedStatus = 'OK'
-  if (totalStock === 0) computedStatus = 'CRITICAL'
-  else if (totalStock < 10 * (med.unitsPerPack || 1)) computedStatus = 'LOW'
+  let computedStatus = "OK";
+  if (totalStock === 0) computedStatus = "CRITICAL";
+  else if (totalStock < 10 * (med.unitsPerPack || 1)) computedStatus = "LOW";
 
   return {
     ...med,
     stock: totalStock,
     status: computedStatus,
     nearestExpiryDate: nearestExpiry?.expiryDate || null,
-    expiringBatches: activeBatches.filter((b: any) => new Date(b.expiryDate) < in30Days).length,
-  }
-}
+    expiringBatches: activeBatches.filter(
+      (b: any) => new Date(b.expiryDate) < in30Days,
+    ).length,
+  };
+};

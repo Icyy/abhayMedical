@@ -1,110 +1,127 @@
-import { useForm } from "react-hook-form"
-import { useState } from "react"
-import type { Medicine, MedicinePayload } from "../types/inventory"
-import SimpleDateInput from "./SimpleDateInput"
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+import type { Medicine, MedicinePayload } from "../types/inventory";
+import SimpleDateInput from "./SimpleDateInput";
 
 interface AddMedicineFormProps {
-  onSubmit: (medicine: MedicinePayload) => Promise<void>
+  onSubmit: (medicine: MedicinePayload) => Promise<void>;
 }
 
 type MedicineFormData = {
-  name: string
-  unit: string
-  packType: string
-  unitsPerPack: number
-  category: Medicine['category']
-  gstPercent: number
-  mrp: number
-  batchNumber: string
-  purchasePrice: number
-  stockUnits: number
-}
+  name: string;
+  unit: string;
+  packType: string;
+  unitsPerPack: number;
+  category: Medicine["category"];
+  gstPercent: number;
+  mrp: number;
+  batchNumber: string;
+  purchasePrice: number;
+  stockUnits: number;
+};
 
 const PACK_TYPES = [
-  { value: 'strip', label: 'Strip (tablets/capsules)' },
-  { value: 'bottle', label: 'Bottle (syrup/liquid)' },
-  { value: 'tube', label: 'Tube' },
-  { value: 'vial', label: 'Vial/Injection' },
-  { value: 'piece', label: 'Individual piece' },
-  { value: 'packet', label: 'Packet' },
-  { value: 'box', label: 'Box' },
-]
+  { value: "strip", label: "Strip (tablets/capsules)" },
+  { value: "bottle", label: "Bottle (syrup/liquid)" },
+  { value: "tube", label: "Tube" },
+  { value: "vial", label: "Vial/Injection" },
+  { value: "piece", label: "Individual piece" },
+  { value: "packet", label: "Packet" },
+  { value: "box", label: "Box" },
+];
 
-const generateBatchNumber = () => `BX${Date.now()}`
+const generateBatchNumber = () => `BX${Date.now()}`;
 
 const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
-  const [mfgDate, setMfgDate] = useState("")
-  const [expDate, setExpDate] = useState("")
+  const [mfgDate, setMfgDate] = useState("");
+  const [expDate, setExpDate] = useState("");
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<MedicineFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<MedicineFormData>({
     defaultValues: {
-      packType: 'strip',
+      packType: "strip",
       unitsPerPack: 10,
-      category: 'ALLOPATHIC',
+      category: "ALLOPATHIC",
       gstPercent: 12,
       mrp: 0,
       purchasePrice: 0,
       stockUnits: 0,
-      unit: 'units',
-    }
-  })
+      unit: "units",
+    },
+  });
 
-  const packType = watch("packType")
-  const unitsPerPack = watch("unitsPerPack") || 1
-  const mrp = watch("mrp") || 0
-  const stockUnits = watch("stockUnits") || 0
-  const purchasePrice = watch("purchasePrice") || 0
+  const packType = watch("packType");
+  const unitsPerPack = watch("unitsPerPack") || 1;
+  const mrp = watch("mrp") || 0;
+  const stockUnits = watch("stockUnits") || 0;
+  const purchasePrice = watch("purchasePrice") || 0;
 
   const getUnitName = () => {
-    if (packType === 'bottle') return 'ml'
-    if (packType === 'vial') return 'ml'
-    if (packType === 'strip') return 'tablet'
-    return 'unit'
-  }
+    if (packType === "bottle") return "ml";
+    if (packType === "vial") return "ml";
+    if (packType === "strip") return "tablet";
+    return "unit";
+  };
 
   const getPackLabel = () => {
-    const type = PACK_TYPES.find(p => p.value === packType)
-    return type?.label.split(' ')[0].toLowerCase() || 'pack'
-  }
+    const type = PACK_TYPES.find((p) => p.value === packType);
+    return type?.label.split(" ")[0].toLowerCase() || "pack";
+  };
 
-  const packCount = unitsPerPack > 1 ? Math.floor(stockUnits / unitsPerPack) : stockUnits
-  const margin = purchasePrice > 0 ? (((mrp - purchasePrice) / mrp) * 100).toFixed(1) : null
+  const packCount = stockUnits || 0;
+  const totalUnitsPreview = packCount * unitsPerPack;
+  const margin =
+    purchasePrice > 0 ? (((mrp - purchasePrice) / mrp) * 100).toFixed(1) : null;
 
   const onFormSubmit = async (data: MedicineFormData) => {
-    const payload = {
+    const actualUnitsPerPack = data.unitsPerPack || 1;
+    const totalUnits = (data.stockUnits || 0) * actualUnitsPerPack;
+
+    const payload: MedicinePayload = {
       name: data.name,
       unit: data.unit || getUnitName(),
       packType: data.packType,
-      unitsPerPack: data.unitsPerPack,
+      unitsPerPack: actualUnitsPerPack,
       category: data.category,
       gstPercent: data.gstPercent,
-      mrp: data.mrp,
+      mrp: data.mrp, // price per pack/strip
       batchNumber: data.batchNumber || generateBatchNumber(),
       manufacturingDate: mfgDate,
       expiryDate: expDate,
       purchasePrice: data.purchasePrice,
-      stockUnits: data.stockUnits,
-    }
+      stockUnits: totalUnits, // actual tablets/ml stored
+    };
 
-    await onSubmit(payload)
-    reset()
-    setMfgDate("")
-    setExpDate("")
-  }
+    await onSubmit(payload);
+    reset();
+    setMfgDate("");
+    setExpDate("");
+  };
 
   return (
     <div>
-      <p className="text-xs text-[#8A8678] uppercase tracking-wide mb-3">Product Details</p>
-      
+      <p className="text-xs text-[#8A8678] uppercase tracking-wide mb-3">
+        Product Details
+      </p>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="flex flex-col gap-1 md:col-span-2">
-          <label className="text-sm text-gray-500">Medicine / Product name</label>
+          <label className="text-sm text-gray-500">
+            Medicine / Product name
+          </label>
           <input
             {...register("name", { required: "Name is required" })}
             placeholder="e.g. Paracetamol 500mg (Crocin)"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -113,13 +130,23 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             {...register("packType")}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           >
-            {PACK_TYPES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+            {PACK_TYPES.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-500">
-            {packType === 'bottle' ? 'ML per bottle' : packType === 'strip' ? 'Tablets per strip' : packType === 'piece' ? 'Units per pack (1 if single)' : 'Units per pack'}
+            {packType === "bottle"
+              ? "ML per bottle"
+              : packType === "strip"
+                ? "Tablets per strip"
+                : packType === "piece"
+                  ? "Units per pack (1 if single)"
+                  : "Units per pack"}
           </label>
           <input
             type="number"
@@ -166,23 +193,33 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           <label className="text-sm text-gray-500">
             MRP per {getPackLabel()} ₹
             {unitsPerPack > 1 && mrp > 0 && (
-              <span className="text-[#8A8678] ml-1">(₹{(mrp / unitsPerPack).toFixed(2)} per {getUnitName()})</span>
+              <span className="text-[#8A8678] ml-1">
+                (₹{(mrp / unitsPerPack).toFixed(2)} per {getUnitName()})
+              </span>
             )}
           </label>
           <input
             type="number"
             min={0}
             step={0.01}
-            {...register("mrp", { valueAsNumber: true, required: "MRP is required", min: { value: 0.01, message: "Must be greater than 0" } })}
+            {...register("mrp", {
+              valueAsNumber: true,
+              required: "MRP is required",
+              min: { value: 0.01, message: "Must be greater than 0" },
+            })}
             placeholder="e.g. 50.00 per strip"
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
           />
-          {errors.mrp && <p className="text-red-500 text-xs mt-1">{errors.mrp.message}</p>}
+          {errors.mrp && (
+            <p className="text-red-500 text-xs mt-1">{errors.mrp.message}</p>
+          )}
         </div>
       </div>
 
-      <p className="text-xs text-[#8A8678] uppercase tracking-wide mb-3 mt-2">First Batch / Current Stock</p>
-      
+      <p className="text-xs text-[#8A8678] uppercase tracking-wide mb-3 mt-2">
+        First Batch / Current Stock
+      </p>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="flex flex-col gap-1 md:col-span-2">
           <label className="text-sm text-gray-500">Batch number</label>
@@ -193,12 +230,22 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
           />
         </div>
 
-        <SimpleDateInput label="Manufacturing date" value={mfgDate} onChange={setMfgDate} />
-        <SimpleDateInput label="Expiry date" value={expDate} onChange={setExpDate} />
+        <SimpleDateInput
+          label="Manufacturing date"
+          value={mfgDate}
+          onChange={setMfgDate}
+        />
+        <SimpleDateInput
+          label="Expiry date"
+          value={expDate}
+          onChange={setExpDate}
+        />
 
         {/* --- CHANGED: Purchase price is now per Pack --- */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Purchase price per {getPackLabel()} ₹</label>
+          <label className="text-sm text-gray-500">
+            Purchase price per {getPackLabel()} ₹
+          </label>
           <input
             type="number"
             min={0}
@@ -218,11 +265,6 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
             min={0}
             {...register("stockUnits", {
               valueAsNumber: true,
-              setValueAs: (v) => {
-                // convert packs to units (tablets) for DB storage
-                const packs = parseInt(v) || 0
-                return packs * unitsPerPack
-              }
             })}
             placeholder={`e.g. 15 ${getPackLabel()}s`}
             className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
@@ -232,13 +274,22 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         {packCount > 0 && (
           <div className="md:col-span-2 bg-[#F7F5F0] rounded-lg p-3 text-xs">
             <div className="flex justify-between mb-1">
-              <span className="text-[#8A8678]">Total stock units</span>
-              <span className="text-gray-900 font-medium">{stockUnits} {getUnitName()}s ({packCount} {getPackLabel()}s)</span>
+              <span className="text-[#8A8678]">Total stock</span>
+              <span className="text-gray-900 font-medium">
+                {totalUnitsPreview} {getUnitName()}s ({packCount}{" "}
+                {getPackLabel()}s)
+              </span>
             </div>
             {margin && (
               <div className="flex justify-between">
                 <span className="text-[#8A8678]">Margin</span>
-                <span className={parseFloat(margin) > 15 ? "text-green-700 font-medium" : "text-amber-700 font-medium"}>
+                <span
+                  className={
+                    parseFloat(margin) > 15
+                      ? "text-green-700 font-medium"
+                      : "text-amber-700 font-medium"
+                  }
+                >
                   {margin}%
                 </span>
               </div>
@@ -254,7 +305,7 @@ const AddMedicineForm = ({ onSubmit }: AddMedicineFormProps) => {
         Add Product
       </button>
     </div>
-  )
-}
+  );
+};
 
-export default AddMedicineForm
+export default AddMedicineForm;

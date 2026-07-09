@@ -1,53 +1,63 @@
-import { useState } from "react"
-import type { Medicine } from "../types/inventory"
-import { getStatusClass } from "../utils/statusHelpers"
-import MedicineDetailModal from "./MedicineDetailModal"
+import { useState } from "react";
+import type { Medicine } from "../types/inventory";
+import { getStatusClass } from "../utils/statusHelpers";
+import MedicineDetailModal from "./MedicineDetailModal";
 
 interface InventoryTableProps {
-  medicines: Medicine[]
-  removeMedicine: (id: string) => void
+  medicines: Medicine[];
+  removeMedicine: (id: string) => void;
 }
 
-export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProps) => {
-  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null)
+export const InventoryTable = ({
+  medicines,
+  removeMedicine,
+}: InventoryTableProps) => {
+  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(
+    null,
+  );
 
   const getMargin = (med: Medicine) => {
-    if (!med.batches || med.batches.length === 0) return null
-    const activeBatches = med.batches.filter(b => b.stockUnits > 0)
-    if (activeBatches.length === 0) return null
-    
+    if (!med.batches || med.batches.length === 0) return null;
+    const activeBatches = med.batches.filter((b) => b.stockUnits > 0);
+    if (activeBatches.length === 0) return null;
+
     const oldestBatch = activeBatches.sort(
-      (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
-    )[0]
-    
-    if (!oldestBatch.purchasePrice || oldestBatch.purchasePrice === 0) return null
-    
+      (a, b) =>
+        new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
+    )[0];
+
+    if (!oldestBatch.purchasePrice || oldestBatch.purchasePrice === 0)
+      return null;
+
     // Margin calculation remains exactly the same since both MRP and Purchase Price are per pack
-    return (((med.mrp - oldestBatch.purchasePrice) / med.mrp) * 100).toFixed(1)
-  }
+    return (((med.mrp - oldestBatch.purchasePrice) / med.mrp) * 100).toFixed(1);
+  };
 
   const getNearestExpiry = (med: Medicine) => {
-    if (!med.batches || med.batches.length === 0) return null
+    if (!med.batches || med.batches.length === 0) return null;
     const active = med.batches
-      .filter(b => b.stockUnits > 0)
-      .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime())
-    if (active.length === 0) return null
-    return active[0].expiryDate
-  }
+      .filter((b) => b.stockUnits > 0)
+      .sort(
+        (a, b) =>
+          new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
+      );
+    if (active.length === 0) return null;
+    return active[0].expiryDate;
+  };
 
   const getBatchNumbers = (med: Medicine) => {
-    if (!med.batches) return '—'
-    const active = med.batches.filter(b => b.stockUnits > 0)
-    if (active.length === 0) return '—'
-    if (active.length === 1) return active[0].batchNumber
-    return `${active[0].batchNumber} +${active.length - 1}`
-  }
+    if (!med.batches) return "—";
+    const active = med.batches.filter((b) => b.stockUnits > 0);
+    if (active.length === 0) return "—";
+    if (active.length === 1) return active[0].batchNumber;
+    return `${active[0].batchNumber} +${active.length - 1}`;
+  };
 
   const isExpiringSoon = (expiryDate: string | null) => {
-    if (!expiryDate) return false
-    const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    return new Date(expiryDate) < in30Days
-  }
+    if (!expiryDate) return false;
+    const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    return new Date(expiryDate) < in30Days;
+  };
 
   return (
     <>
@@ -55,21 +65,38 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#E8E4D9]">
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Medicine</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Batch</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Stock</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">MRP/pack</th> {/* CHANGED LABEL */}
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Expiry</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Status</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Margin</th>
-              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">Remove</th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Medicine
+              </th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Batch
+              </th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Stock
+              </th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                MRP/pack
+              </th>{" "}
+              {/* CHANGED LABEL */}
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Expiry
+              </th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Status
+              </th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Margin
+              </th>
+              <th className="text-left p-3 text-sm text-[#8A8678] font-normal">
+                Remove
+              </th>
             </tr>
           </thead>
           <tbody>
             {medicines.map((med) => {
-              const margin = getMargin(med)
-              const nearestExpiry = getNearestExpiry(med)
-              const expiringSoon = isExpiringSoon(nearestExpiry)
+              const margin = getMargin(med);
+              const nearestExpiry = getNearestExpiry(med);
+              const expiringSoon = isExpiringSoon(nearestExpiry);
 
               return (
                 <tr
@@ -78,55 +105,84 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
                   onClick={() => setSelectedMedicine(med)}
                 >
                   <td className="p-3 text-sm text-gray-900">{med.name}</td>
-                  <td className="p-3 text-xs text-[#8A8678] font-mono">{getBatchNumbers(med)}</td>
+                  <td className="p-3 text-xs text-[#8A8678] font-mono">
+                    {getBatchNumbers(med)}
+                  </td>
                   <td className="p-3 text-sm text-gray-900">
-                    {(med.stock ?? 0)* med.unitsPerPack}
-                    {med.unitsPerPack > 1 && (
-                      <span className="text-xs text-[#8A8678] ml-1">
-                        ({Math.floor((med.stock ?? 0))} {med.packType}s)
-                      </span>
+                    {med.unitsPerPack > 1 ? (
+                      <>
+                        {Math.floor((med.stock ?? 0) / med.unitsPerPack)}{" "}
+                        {med.packType}s
+                        <span className="text-xs text-[#8A8678] ml-1">
+                          ({med.stock ?? 0}{" "}
+                          {med.packType === "strip" ? "tabs" : "units"})
+                        </span>
+                      </>
+                    ) : (
+                      (med.stock ?? 0)
                     )}
                   </td>
-                  
+
                   <td className="p-3 text-sm text-gray-900">
-                    ₹{(med.mrp || 0).toFixed(2)}
+                    ₹{(med.mrp || 0).toFixed(2)}/{med.packType}
                     {med.unitsPerPack > 1 && (
                       <span className="text-[10px] text-[#8A8678] block mt-0.5">
-                        (₹{(med.mrp / med.unitsPerPack).toFixed(2)}/{med.packType === 'strip' ? 'tab' : 'unit'})
+                        ₹{((med.mrp || 0) / med.unitsPerPack).toFixed(2)}/
+                        {med.packType === "strip" ? "tab" : "unit"}
                       </span>
                     )}
                   </td>
 
                   <td className="p-3 text-sm">
                     {nearestExpiry ? (
-                      <span className={expiringSoon ? "text-red-600 text-xs font-medium" : "text-xs text-[#8A8678]"}>
+                      <span
+                        className={
+                          expiringSoon
+                            ? "text-red-600 text-xs font-medium"
+                            : "text-xs text-[#8A8678]"
+                        }
+                      >
                         {expiringSoon && "⚠️ "}
-                        {new Date(nearestExpiry).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        {new Date(nearestExpiry).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "2-digit",
+                        })}
                       </span>
-                    ) : <span className="text-xs text-gray-400">—</span>}
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="p-3">
-                    <span className={`${getStatusClass(med.status || 'OK')} px-2 py-0.5 rounded-full text-xs font-medium`}>
-                      {med.status || 'OK'}
+                    <span
+                      className={`${getStatusClass(med.status || "OK")} px-2 py-0.5 rounded-full text-xs font-medium`}
+                    >
+                      {med.status || "OK"}
                     </span>
                   </td>
                   <td className="p-3 text-sm">
                     {margin ? (
-                      <span className={`text-xs font-medium ${parseFloat(margin) > 20 ? 'text-green-700' : 'text-amber-700'}`}>
+                      <span
+                        className={`text-xs font-medium ${parseFloat(margin) > 20 ? "text-green-700" : "text-amber-700"}`}
+                      >
                         {margin}%
                       </span>
-                    ) : <span className="text-xs text-gray-400">—</span>}
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="p-3" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => confirm(`Remove ${med.name}?`) && removeMedicine(med.id)}
+                      onClick={() =>
+                        confirm(`Remove ${med.name}?`) && removeMedicine(med.id)
+                      }
                       className="text-red-400 hover:text-red-600 text-xs hover:bg-red-50 px-2 py-1 rounded-md"
                     >
                       🗑️
                     </button>
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
@@ -139,5 +195,5 @@ export const InventoryTable = ({ medicines, removeMedicine }: InventoryTableProp
         />
       )}
     </>
-  )
-}
+  );
+};

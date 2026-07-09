@@ -112,7 +112,7 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
         where: { id: item.medicineId },
       });
       if (medicine) {
-        const lineTotal = item.pricePerUnit * item.quantity;
+        const lineTotal = (item.price || 0) * item.quantity; // item.price not item.pricePerUnit
         const lineGst = lineTotal * (medicine.gstPercent / 100);
         subTotal += lineTotal;
         gstAmount += lineGst;
