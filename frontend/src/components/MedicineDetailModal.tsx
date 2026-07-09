@@ -24,10 +24,10 @@ const MedicineDetailModal = ({
   medicine,
   onClose,
 }: MedicineDetailModalProps) => {
-  const packInfo =
-    medicine.unitsPerPack > 1
-      ? `${Math.floor(medicine.stock)} ${medicine.packType}s × ${medicine.unitsPerPack} units`
-      : null;
+  // const packInfo =
+  //   medicine.unitsPerPack > 1
+  //     ? `${Math.floor(medicine.stock)} ${medicine.packType}s × ${medicine.unitsPerPack} units`
+  //     : null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
