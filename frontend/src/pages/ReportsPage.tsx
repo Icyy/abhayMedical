@@ -33,7 +33,7 @@ const ReportsPage = () => {
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
-  const [activeReport, setActiveReport] = useState<ReportType>(null);
+  const [activeReport, setActiveReport] = useState<ReportType>("sales");
   const [salesData, setSalesData] = useState<any>(null);
   const [purchaseData, setPurchaseData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
