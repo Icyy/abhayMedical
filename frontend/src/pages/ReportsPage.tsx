@@ -64,7 +64,6 @@ const ReportsPage = () => {
     try {
       const data = await fetchSalesReport(m, y);
       setSalesData(data);
-      console.log(salesData)
     } finally {
       setIsLoading(false);
     }
