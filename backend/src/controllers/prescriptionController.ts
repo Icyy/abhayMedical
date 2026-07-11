@@ -135,7 +135,7 @@ export const addPrescription = async (req: AuthRequest, res: Response) => {
           create: items.map((item: any) => ({
             medicineId: item.medicineId,
             quantity: item.quantity,
-            pricePerUnit: item.pricePerUnit,
+            pricePerUnit: item.price,
             gstPercent: item.gstPercent || 0,
             sellAsPackOf: item.sellAsPackOf || 1,
           })),
