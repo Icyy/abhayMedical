@@ -62,67 +62,64 @@ export const createPurchaseOrder = async (req: AuthRequest, res: Response) => {
 
 export const receivePurchaseOrder = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
-
-    if (typeof id !== "string") {
-      return res.status(400).json({ error: "Invalid customer ID format" });
-    }
+    const { id } = req.params
 
     const order = await prisma.purchaseOrder.findUnique({
       where: { id },
-      include: { items: true },
-    });
+      include: { items: true }
+    })
 
     if (!order) {
-      return res.status(404).json({ error: "Purchase order not found" });
+      return res.status(404).json({ error: 'Purchase order not found' })
     }
 
     const updated = await prisma.purchaseOrder.update({
       where: { id },
       data: {
-        status: "RECEIVED",
-        receivedDate: new Date(),
+        status: 'RECEIVED',
+        receivedDate: new Date()
       },
       include: {
         supplier: true,
-        items: true,
-      },
-    });
+        items: true
+      }
+    })
 
     for (const item of order.items) {
+      // Find the medicine to get unitsPerPack
       const medicine = await prisma.medicine.findFirst({
         where: {
           name: {
             contains: item.medicineName,
-            mode: "insensitive",
-          },
-        },
-      });
+            mode: 'insensitive'
+          }
+        }
+      })
 
       if (medicine) {
+        // item.quantity = number of strips/bottles ordered
+        // stockUnits = individual tablets/ml = strips × unitsPerPack
+        const stockUnitsToAdd = item.quantity * medicine.unitsPerPack
+
         await prisma.medicineBatch.create({
           data: {
             medicineId: medicine.id,
             batchNumber: item.batchNumber || `PO${Date.now()}`,
-            manufacturingDate: item.manufacturingDate
-              ? new Date(item.manufacturingDate)
-              : new Date(),
-            expiryDate: item.expiryDate
-              ? new Date(item.expiryDate)
-              : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            purchasePrice: item.pricePerUnit,
-            stockUnits: item.quantity,
-            supplierId: order.supplierId,
-          },
-        });
+            manufacturingDate: item.manufacturingDate ? new Date(item.manufacturingDate) : new Date(),
+            expiryDate: item.expiryDate ? new Date(item.expiryDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            purchasePrice: item.pricePerUnit, // price per strip - stored as-is
+            stockUnits: stockUnitsToAdd,       // converted to individual units
+            supplierId: order.supplierId
+          }
+        })
       }
     }
 
-    res.json(updated);
+    res.json(updated)
   } catch (error) {
-    res.status(500).json({ error: "Failed to receive purchase order" });
+    res.status(500).json({ error: 'Failed to receive purchase order' })
   }
-};
+}
 
 export const cancelPurchaseOrder = async (req: AuthRequest, res: Response) => {
   try {

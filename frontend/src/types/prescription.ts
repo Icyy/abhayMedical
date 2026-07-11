@@ -2,8 +2,7 @@ interface PrescriptionItem {
   id: string
   medicineId: string
   quantity: number
-  price: number        
-  pricePerUnit?: number 
+  pricePerUnit: number 
   gstPercent: number
   sellAsPackOf: number
   medicine: {

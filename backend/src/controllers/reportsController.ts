@@ -117,7 +117,7 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
           medicineRevenue[name] = { name, quantity: 0, revenue: 0 };
         }
         medicineRevenue[name].quantity += item.quantity;
-        medicineRevenue[name].revenue += price * item.quantity;
+        medicineRevenue[name].revenue += price * item.quantity
       });
     });
 

@@ -45,9 +45,9 @@ const InvoiceModal = ({ prescription, onClose }: InvoiceModalProps) => {
             <div key={item.id} className="flex justify-between text-sm py-1.5 border-b border-[#F1EFE8]">
               <div>
                 <p className="text-gray-900">{item.medicine?.name}</p>
-                <p className="text-xs text-[#8A8678]">{item.quantity} units × ₹{safe(item.price)}</p>
+                <p className="text-xs text-[#8A8678]">{item.quantity} units × ₹{safe(item.pricePerUnit)}</p>
               </div>
-              <p className="text-gray-900 font-medium">₹{safe(item.price * item.quantity)}</p>
+              <p className="text-gray-900 font-medium">₹{safe((item.pricePerUnit || 0) * item.quantity)}</p>
             </div>
           ))}
         </div>
