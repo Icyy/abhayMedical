@@ -64,6 +64,10 @@ export const receivePurchaseOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params
 
+     if (typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid customer ID format" });
+    }
+
     const order = await prisma.purchaseOrder.findUnique({
       where: { id },
       include: { items: true }
