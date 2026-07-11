@@ -111,12 +111,13 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
     > = {};
     prescriptions.forEach((p: any) => {
       p.items.forEach((item: any) => {
-        const name = item.medicine.name;
+        const name = item.medicine?.name || "Unknown";
+        const price = item.pricePerUnit || item.price || 0; 
         if (!medicineRevenue[name]) {
           medicineRevenue[name] = { name, quantity: 0, revenue: 0 };
         }
         medicineRevenue[name].quantity += item.quantity;
-        medicineRevenue[name].revenue += item.price * item.quantity;
+        medicineRevenue[name].revenue += price * item.quantity;
       });
     });
 
