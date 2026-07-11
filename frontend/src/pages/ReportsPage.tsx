@@ -64,6 +64,7 @@ const ReportsPage = () => {
     try {
       const data = await fetchSalesReport(m, y);
       setSalesData(data);
+      console.log(salesData)
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +199,6 @@ const ReportsPage = () => {
                 </h2>
               </div>
               <div className="divide-y divide-[#F1EFE8]">
-                {salesData.topMedicines.map((med: any)=>console.log(med))}
                 {salesData.topMedicines.map((med: any, i: number) => (
                   <div
                     key={med.name}
