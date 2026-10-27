@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { usePrescriptionStore } from "../store/prescriptionStore"
-import { useInventoryStore } from "../store/inventoryStore"
 import MedicineAutocomplete from "./MedicineAutocomplete"
 import type { Medicine } from "../types/inventory"
 import { apiRequest } from "../services/api"
