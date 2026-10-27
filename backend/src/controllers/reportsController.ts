@@ -68,8 +68,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 
 export const getSalesReport = async (req: AuthRequest, res: Response) => {
   try {
-    const month =
-      parseInt(req.query.month as string) || new Date().getMonth() + 1;
+    const month = parseInt(req.query.month as string) || new Date().getMonth() + 1;
     const year = parseInt(req.query.year as string) || new Date().getFullYear();
 
     const startDate = new Date(year, month - 1, 1);
@@ -105,16 +104,24 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
       0,
     );
 
+    // 1. UPDATE: Add packType and unitsPerPack to the TypeScript type
     const medicineRevenue: Record<
       string,
-      { name: string; quantity: number; revenue: number }
+      { name: string; quantity: number; revenue: number; packType?: string; unitsPerPack?: number }
     > = {};
+    
     prescriptions.forEach((p: any) => {
       p.items.forEach((item: any) => {
         const name = item.medicine?.name || "Unknown";
         const price = item.pricePerUnit || item.price || 0; 
+        
+        // 2. UPDATE: Extract pack properties from the included medicine model
+        const packType = item.medicine?.packType || "unit";
+        const unitsPerPack = item.medicine?.unitsPerPack || 1;
+
         if (!medicineRevenue[name]) {
-          medicineRevenue[name] = { name, quantity: 0, revenue: 0 };
+          // 3. UPDATE: Initialize with the new properties
+          medicineRevenue[name] = { name, quantity: 0, revenue: 0, packType, unitsPerPack };
         }
         medicineRevenue[name].quantity += item.quantity;
         medicineRevenue[name].revenue += price * item.quantity
