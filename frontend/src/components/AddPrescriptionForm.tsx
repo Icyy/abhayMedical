@@ -27,7 +27,7 @@ type PrescriptionFormData = {
 
 const AddPrescriptionForm = () => {
   const addPrescription = usePrescriptionStore((state) => state.addPrescription)
-  const medicines = useInventoryStore((state) => state.medicines)
+  // const medicines = useInventoryStore((state) => state.medicines)
 
   // Default to 10% discount for all customers 
 const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<PrescriptionFormData>({
