@@ -30,9 +30,9 @@ const AddPrescriptionForm = () => {
   const medicines = useInventoryStore((state) => state.medicines)
 
   // Default to 10% discount for all customers 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<PrescriptionFormData>({
-    defaultValues: { discount: 10, notes: "", doctorName: "" },
-  })
+const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<PrescriptionFormData>({
+  defaultValues: { discount: 10, notes: "", doctorName: "" },
+})
 
   const [selectedMedicines, setSelectedMedicines] = useState<SelectedMedicine[]>([])
   const [pendingQuantity, setPendingQuantity] = useState(1)
@@ -49,7 +49,7 @@ const AddPrescriptionForm = () => {
   const qtyRef = useRef<HTMLInputElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
-  const recentMedicines = medicines.slice(0, 5)
+  // const recentMedicines = medicines.slice(0, 5)
 
   // Global Keyboard Shortcut to focus search
   useEffect(() => {
@@ -148,29 +148,29 @@ const AddPrescriptionForm = () => {
     }
   }
 
-  const handleQuickAdd = (med: Medicine) => {
-    const baseUnitPrice = med.mrp / med.unitsPerPack
-    setSelectedMedicines((prev) => {
-      const existing = prev.find((m) => m.medicineId === med.id)
-      if (existing) {
-        return prev.map((m) => m.medicineId === med.id ? {
-          ...m,
-          quantity: m.quantity + 1,
-          lineTotal: m.pricePerUnit * (m.quantity + 1)
-        } : m)
-      }
-      return [...prev, {
-        medicineId: med.id,
-        name: med.name,
-        quantity: 1,
-        pricePerUnit: baseUnitPrice,
-        unitLabel: getUnitLabel(med, 1),
-        sellAsPackOf: 1,
-        lineTotal: baseUnitPrice,
-        availableStock: med.stock
-      }]
-    })
-  }
+  // const handleQuickAdd = (med: Medicine) => {
+  //   const baseUnitPrice = med.mrp / med.unitsPerPack
+  //   setSelectedMedicines((prev) => {
+  //     const existing = prev.find((m) => m.medicineId === med.id)
+  //     if (existing) {
+  //       return prev.map((m) => m.medicineId === med.id ? {
+  //         ...m,
+  //         quantity: m.quantity + 1,
+  //         lineTotal: m.pricePerUnit * (m.quantity + 1)
+  //       } : m)
+  //     }
+  //     return [...prev, {
+  //       medicineId: med.id,
+  //       name: med.name,
+  //       quantity: 1,
+  //       pricePerUnit: baseUnitPrice,
+  //       unitLabel: getUnitLabel(med, 1),
+  //       sellAsPackOf: 1,
+  //       lineTotal: baseUnitPrice,
+  //       availableStock: med.stock
+  //     }]
+  //   })
+  // }
 
   const subtotal = selectedMedicines.reduce((sum, m) => sum + m.lineTotal, 0)
 
@@ -352,7 +352,7 @@ const AddPrescriptionForm = () => {
           <div className="text-right">
             <div className="text-xs text-gray-500 line-through">₹{(subtotal || 0).toFixed(2)}</div>
             <div className="text-lg font-bold text-[#0F4C3A]">
-              ₹{(subtotal * (1 - (register("discount").value || 10) / 100)).toFixed(2)}
+              ₹{(subtotal * (1 - (watch("discount") || 10) / 100)).toFixed(2)}
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, KeyboardEvent } from "react"
+import { useState, useEffect, useRef } from "react"
+import type { KeyboardEvent } from "react"
 import { useInventoryStore } from "../store/inventoryStore"
 import type { Medicine } from "../types/inventory"
 

@@ -54,7 +54,7 @@ const PrescriptionsPage = () => {
   if (error) return <p className="p-4 md:p-6 text-red-500">{error}</p>
 
   return (
-    <div className="flex flex-col xl:flex-row gap-6 p-4 md:p-6 min-h-screen bg-gray-200">
+    <div className="flex flex-col xl:flex-row gap-6 p-4 md:p-6 min-h-screen bg-gray-50/50">
       {/* Left Column: Persistent Entry Form */}
       <div className="w-full xl:w-5/12 shrink-0">
         <div className="bg-white border border-[#E8E4D9] rounded-xl shadow-sm p-4 md:p-5 sticky top-6">
