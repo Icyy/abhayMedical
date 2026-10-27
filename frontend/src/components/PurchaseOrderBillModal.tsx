@@ -5,6 +5,7 @@ import SimpleDateInput from "./SimpleDateInput";
 import { useSupplierStore } from "../store/supplierStore";
 import type { Medicine } from "../types/inventory";
 import type { Supplier } from "../types/supplier";
+import { useToast } from "../components/toast";
 
 interface PurchaseOrderBillModalProps {
   medicine: Medicine;
@@ -37,6 +38,7 @@ const PurchaseOrderBillModal = ({
     (state) => state.loadPurchaseOrders,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { error: toastError } = useToast();
 
   const purchasePrice = medicine.mrp * (1 - supplier.discountPercent / 100);
 
@@ -91,7 +93,7 @@ const PurchaseOrderBillModal = ({
       onOrderCreated();
       onClose();
     } catch (err: any) {
-      alert(err.message || "Failed to create purchase order");
+      toastError(err.message || "Failed to create purchase order");
     } finally {
       setIsSubmitting(false);
     }

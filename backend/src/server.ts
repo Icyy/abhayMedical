@@ -127,6 +127,20 @@ app.use("/api/reports", reportsRoutes);
 // ==========================================
 // 4. ERROR HANDLING
 // ==========================================
+// app.use(
+//   (
+//     err: any,
+//     req: express.Request,
+//     res: express.Response,
+//     next: express.NextFunction,
+//   ) => {
+//     console.error("Unhandled error:", err);
+//     const isProd = process.env.NODE_ENV === "production";
+//     res.status(500).json({
+//       error: isProd ? "Internal Server Error" : err.message,
+//     });
+//   },
+// );
 app.use(
   (
     err: any,
@@ -134,7 +148,10 @@ app.use(
     res: express.Response,
     next: express.NextFunction,
   ) => {
-    console.error("Unhandled error:", err);
+    console.error("--- UNHANDLED ROUTE ERROR ---");
+    console.error("Path:", req.path);
+    console.error("Error Details:", err);
+    
     const isProd = process.env.NODE_ENV === "production";
     res.status(500).json({
       error: isProd ? "Internal Server Error" : err.message,

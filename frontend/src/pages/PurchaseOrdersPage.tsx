@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
-import { CheckCircle, XCircle, Clock } from "lucide-react"
+import { CheckCircle, XCircle, Clock, Search } from "lucide-react"
 import CreatePurchaseOrderForm from "../components/CreatePurchaseOrderForm"
-import CollapsibleSection from "../components/CollapsibleSection"
 import PurchaseOrderDetailModal from "../components/PurchaseOrderDetailModal"
 import { useSupplierStore } from "../store/supplierStore"
 import type { PurchaseOrder } from "../types/supplier"
@@ -19,87 +18,102 @@ const PurchaseOrdersPage = () => {
   }, [])
 
   const getStatusConfig = (status: string) => {
-    if (status === "RECEIVED") return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-500" }
-    if (status === "CANCELLED") return { icon: XCircle, color: "text-red-500", bg: "bg-red-400" }
-    return { icon: Clock, color: "text-amber-600", bg: "bg-amber-400" }
+    if (status === "RECEIVED") return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100", border: "border-green-200" }
+    if (status === "CANCELLED") return { icon: XCircle, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" }
+    return { icon: Clock, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" }
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-medium text-gray-800">Purchase Orders</h1>
-        <span className="text-xs text-[#8A8678]">{purchaseOrders.length} orders</span>
+    <div className="flex flex-col xl:flex-row gap-6 p-4 md:p-6 min-h-screen bg-gray-50/50">
+      {/* Left Column: Persistent PO Form */}
+      <div className="w-full xl:w-5/12 shrink-0">
+        <div className="bg-white border border-[#E8E4D9] rounded-xl shadow-sm p-4 md:p-5 sticky top-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">New Purchase Order</h2>
+            <span className="text-[10px] uppercase tracking-wider text-gray-400 bg-gray-100 px-2 py-1 rounded">Alt + O to add items</span>
+          </div>
+          <CreatePurchaseOrderForm />
+        </div>
       </div>
 
-      <CollapsibleSection title="Create purchase order">
-        <CreatePurchaseOrderForm />
-      </CollapsibleSection>
+      {/* Right Column: Queue & List */}
+      <div className="w-full xl:w-7/12 flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-medium text-gray-800">Order History</h1>
+          <span className="text-xs text-[#8A8678] bg-white px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
+            {purchaseOrders.length} orders
+          </span>
+        </div>
 
-      {purchaseOrders.length === 0 ? (
-        <p className="text-sm text-gray-400">No purchase orders yet</p>
-      ) : (
-        <div className="flex flex-col gap-0">
-          {purchaseOrders.map((order, index) => {
-            const supplier = suppliers.find((s) => s.id === order.supplierId)
-            const config = getStatusConfig(order.status)
-            const Icon = config.icon
-            const isLast = index === purchaseOrders.length - 1
+        {purchaseOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+            <p className="text-sm text-gray-400">No purchase orders yet</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {purchaseOrders.map((order) => {
+              const supplier = suppliers.find((s) => s.id === order.supplierId)
+              const config = getStatusConfig(order.status)
+              const Icon = config.icon
 
-            return (
-              <div key={order.id} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full ${config.bg} flex items-center justify-center flex-shrink-0 mt-1`}>
-                    <Icon size={14} className="text-white" />
-                  </div>
-                  {!isLast && <div className="w-0.5 bg-[#E8E4D9] flex-1 mt-1 mb-1" />}
-                </div>
-
+              return (
                 <div
-                  className={`bg-white border border-[#E8E4D9] rounded-lg p-4 flex-1 cursor-pointer hover:border-green-300 transition-colors ${!isLast ? "mb-2" : ""}`}
+                  key={order.id}
                   onClick={() => setSelectedOrder(order)}
+                  className="bg-white border border-[#E8E4D9] rounded-xl p-4 cursor-pointer hover:shadow-sm hover:border-[#0F4C3A]/30 transition-all group"
                 >
-                  <div className="flex items-start justify-between flex-wrap gap-2">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {supplier?.name || order.supplier?.name || "Unknown supplier"}
-                      </p>
-                      <p className="text-xs text-[#8A8678] mt-0.5">
-                        {new Date(order.orderDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        {order.expectedDelivery && ` · Expected ${new Date(order.expectedDelivery).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`}
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {supplier?.name || order.supplier?.name || "Unknown supplier"}
+                        </p>
+                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase border ${config.bg} ${config.color} ${config.border}`}>
+                          <Icon size={10} strokeWidth={3} />
+                          {order.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#8A8678]">
+                        Ordered: {new Date(order.orderDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {order.expectedDelivery && ` · Expected: ${new Date(order.expectedDelivery).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">₹{order.totalCost.toFixed(2)}</p>
-                      <p className="text-xs text-[#8A8678]">{order.items.length} item{order.items.length !== 1 ? "s" : ""}</p>
+                    <div className="flex flex-col items-end">
+                      <p className="text-base font-bold text-gray-900">₹{order.totalCost.toFixed(2)}</p>
+                      <p className="text-xs text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded mt-1">
+                        {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                      </p>
                     </div>
                   </div>
 
                   {order.items.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {order.items.map((item, i) => (
-                        <span key={i} className="text-[11px] bg-[#F7F5F0] text-[#8A8678] px-2 py-0.5 rounded">
-                          {item.medicineName} × {item.quantity}
-                          {item.batchNumber && <span className="text-[10px] ml-1 font-mono">({item.batchNumber})</span>}
+                    <div className="mt-3 pt-3 border-t border-gray-50 flex flex-wrap gap-1.5">
+                      {order.items.slice(0, 4).map((item, i) => (
+                        <span key={i} className="text-[11px] bg-[#F7F5F0] text-gray-700 px-2 py-1 rounded-md font-medium border border-gray-100">
+                          {item.medicineName} <span className="text-gray-400 mx-0.5">×</span> {item.quantity}
                         </span>
                       ))}
+                      {order.items.length > 4 && (
+                        <span className="text-[11px] bg-gray-50 text-gray-500 px-2 py-1 rounded-md font-medium border border-gray-100">
+                          +{order.items.length - 4} more
+                        </span>
+                      )}
                     </div>
                   )}
-
-                  <p className="text-[10px] text-[#8A8678] mt-2">Tap to view details</p>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
 
-      {selectedOrder && (
-        <PurchaseOrderDetailModal
-          order={selectedOrder}
-          supplierName={suppliers.find(s => s.id === selectedOrder.supplierId)?.name || "Unknown"}
-          onClose={() => setSelectedOrder(null)}
-        />
-      )}
+        {selectedOrder && (
+          <PurchaseOrderDetailModal
+            order={selectedOrder}
+            supplierName={suppliers.find(s => s.id === selectedOrder.supplierId)?.name || "Unknown"}
+            onClose={() => setSelectedOrder(null)}
+          />
+        )}
+      </div>
     </div>
   )
 }

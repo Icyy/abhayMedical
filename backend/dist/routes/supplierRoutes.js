@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const supplierController_1 = require("../controllers/supplierController");
+const authMiddleware_1 = require("../middlewares/authMiddleware");
+const router = (0, express_1.Router)();
+router.get('/', authMiddleware_1.authenticate, supplierController_1.getSuppliers);
+router.post('/', authMiddleware_1.authenticate, (0, authMiddleware_1.authorizeRoles)('OWNER', 'ADMIN'), supplierController_1.addSupplier);
+router.put('/:id', authMiddleware_1.authenticate, (0, authMiddleware_1.authorizeRoles)('OWNER', 'ADMIN'), supplierController_1.updateSupplier);
+router.delete('/:id', authMiddleware_1.authenticate, (0, authMiddleware_1.authorizeRoles)('OWNER', 'ADMIN'), supplierController_1.deleteSupplier);
+router.post('/:id/medicines', authMiddleware_1.authenticate, (0, authMiddleware_1.authorizeRoles)('OWNER', 'ADMIN'), supplierController_1.addSupplierMedicine);
+router.get('/compare/:medicineName', authMiddleware_1.authenticate, supplierController_1.comparePrices);
+exports.default = router;

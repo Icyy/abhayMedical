@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { usePrescriptionStore } from "../store/prescriptionStore"
 import { useInventoryStore } from "../store/inventoryStore"
@@ -29,8 +29,9 @@ const AddPrescriptionForm = () => {
   const addPrescription = usePrescriptionStore((state) => state.addPrescription)
   const medicines = useInventoryStore((state) => state.medicines)
 
+  // Default to 10% discount for all customers 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<PrescriptionFormData>({
-    defaultValues: { discount: 0, notes: "", doctorName: "" },
+    defaultValues: { discount: 10, notes: "", doctorName: "" },
   })
 
   const [selectedMedicines, setSelectedMedicines] = useState<SelectedMedicine[]>([])
@@ -41,10 +42,33 @@ const AddPrescriptionForm = () => {
   const [autocompleteKey, setAutocompleteKey] = useState(0)
   const [isLookingUp, setIsLookingUp] = useState(false)
   const [customerFound, setCustomerFound] = useState(false)
-  const [isWalkIn, setIsWalkIn] = useState(false)
+  
+  // Default to Walk-in for faster counter checkout
+  const [isWalkIn, setIsWalkIn] = useState(true) 
+  
   const qtyRef = useRef<HTMLInputElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   const recentMedicines = medicines.slice(0, 5)
+
+  // Global Keyboard Shortcut to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault()
+        focusSearchInput()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const focusSearchInput = () => {
+    if (wrapperRef.current) {
+      const input = wrapperRef.current.querySelector('input')
+      if (input) input.focus()
+    }
+  }
 
   const getUnitLabel = (med: Medicine, packOf: number = 1) => {
     if (packOf > 1) {
@@ -53,7 +77,6 @@ const AddPrescriptionForm = () => {
     return med.packType === 'bottle' ? 'ml' : med.packType === 'strip' ? 'tablet' : 'unit'
   }
 
-  // --- CHANGED: Safely converts Pack Price (MRP) to Per-Unit Price ---
   const getPricePerUnit = (med: Medicine, packOf: number = 1) => {
     return (med.mrp / med.unitsPerPack) * packOf
   }
@@ -79,33 +102,31 @@ const AddPrescriptionForm = () => {
 
   const handleMedicineSelect = (medicine: Medicine) => {
     setPendingMedicine(medicine)
-    setSellAsPackOf(1) 
-    setTimeout(() => qtyRef.current?.focus(), 50)
+    setSellAsPackOf(medicine.unitsPerPack > 1 ? medicine.unitsPerPack : 1) // Default to full strip/bottle if applicable
+    setTimeout(() => qtyRef.current?.focus(), 10)
   }
 
   const handleAddToList = () => {
-    if (!pendingMedicine) { setMedicineError("Select a medicine first"); return }
-    if (pendingQuantity < 1) { setMedicineError("Quantity must be at least 1"); return }
+    if (!pendingMedicine) { setMedicineError("Select a medicine"); return }
+    if (pendingQuantity < 1) { setMedicineError("Qty must be >= 1"); return }
 
     const pricePerUnit = getPricePerUnit(pendingMedicine, sellAsPackOf)
     const unitLabel = getUnitLabel(pendingMedicine, sellAsPackOf)
-    
     const stockNeeded = pendingQuantity * sellAsPackOf
+    
     if (stockNeeded > pendingMedicine.stock) {
-      setMedicineError(`Only ${Math.floor(pendingMedicine.stock / sellAsPackOf)} ${unitLabel}(s) available`)
+      setMedicineError(`Only ${Math.floor(pendingMedicine.stock / sellAsPackOf)} ${unitLabel}(s) left`)
       return
     }
 
     setMedicineError("")
-    
-    // Calculate the pure base unit price to store in the array
     const baseUnitPrice = pendingMedicine.mrp / pendingMedicine.unitsPerPack
 
     setSelectedMedicines([...selectedMedicines, {
       medicineId: pendingMedicine.id,
       name: pendingMedicine.name,
       quantity: pendingQuantity * sellAsPackOf,
-      pricePerUnit: baseUnitPrice, // CHANGED: Stores per-tablet price
+      pricePerUnit: baseUnitPrice, 
       unitLabel,
       sellAsPackOf,
       lineTotal: pricePerUnit * pendingQuantity,
@@ -115,16 +136,20 @@ const AddPrescriptionForm = () => {
     setAutocompleteKey((prev) => prev + 1)
     setPendingMedicine(null)
     setPendingQuantity(1)
-    setSellAsPackOf(1)
+    
+    // Auto-focus back to search for seamless continuous entry
+    setTimeout(() => focusSearchInput(), 10)
   }
 
   const handleQtyKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") { e.preventDefault(); handleAddToList() }
+    if (e.key === "Enter") { 
+      e.preventDefault()
+      handleAddToList() 
+    }
   }
 
   const handleQuickAdd = (med: Medicine) => {
     const baseUnitPrice = med.mrp / med.unitsPerPack
-
     setSelectedMedicines((prev) => {
       const existing = prev.find((m) => m.medicineId === med.id)
       if (existing) {
@@ -138,10 +163,10 @@ const AddPrescriptionForm = () => {
         medicineId: med.id,
         name: med.name,
         quantity: 1,
-        pricePerUnit: baseUnitPrice, // CHANGED: Stores per-tablet price
+        pricePerUnit: baseUnitPrice,
         unitLabel: getUnitLabel(med, 1),
         sellAsPackOf: 1,
-        lineTotal: baseUnitPrice,    // CHANGED: Base line total
+        lineTotal: baseUnitPrice,
         availableStock: med.stock
       }]
     })
@@ -150,7 +175,7 @@ const AddPrescriptionForm = () => {
   const subtotal = selectedMedicines.reduce((sum, m) => sum + m.lineTotal, 0)
 
   const onFormSubmit = async (data: PrescriptionFormData) => {
-    if (selectedMedicines.length === 0) { setMedicineError("Add at least one medicine"); return }
+    if (selectedMedicines.length === 0) { setMedicineError("Cart is empty"); return }
     try {
       await addPrescription({
         customerPhone: isWalkIn ? '' : data.customerPhone,
@@ -165,194 +190,179 @@ const AddPrescriptionForm = () => {
           sellAsPackOf: med.sellAsPackOf,
         })),
       })
-      reset({ customerName: "", customerPhone: "", doctorName: "", notes: "", discount: 0 })
+      reset({ customerName: "", customerPhone: "", doctorName: "", notes: "", discount: 10 })
       setSelectedMedicines([])
       setMedicineError("")
       setCustomerFound(false)
-      setIsWalkIn(false)
+      setIsWalkIn(true)
     } catch (err: any) {
-      setMedicineError(err.message || "Failed to save prescription")
+      setMedicineError(err.message || "Failed to save")
     }
   }
 
   return (
-    <div>
-      {/* Walk-in toggle */}
-      <div className="flex items-center gap-3 mb-4 p-3 bg-[#F7F5F0] rounded-lg">
-        <button
-          onClick={() => setIsWalkIn(false)}
-          className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${!isWalkIn ? 'bg-[#0F4C3A] text-white' : 'text-[#8A8678]'}`}
-        >
-          Registered Customer
-        </button>
+    <div className="flex flex-col h-full">
+      {/* Customer Mode Toggle */}
+      <div className="flex p-1 bg-gray-100 rounded-lg mb-4">
         <button
           onClick={() => setIsWalkIn(true)}
-          className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${isWalkIn ? 'bg-[#0F4C3A] text-white' : 'text-[#8A8678]'}`}
+          className={`flex-1 text-xs py-2 rounded-md font-semibold transition-all ${isWalkIn ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Walk-in / Cash Sale
+          Walk-in / Cash
+        </button>
+        <button
+          onClick={() => setIsWalkIn(false)}
+          className={`flex-1 text-xs py-2 rounded-md font-semibold transition-all ${!isWalkIn ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          Delivery / Registered
         </button>
       </div>
 
       {!isWalkIn && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-500">Phone number</label>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
             <div className="relative">
               <input
                 {...register("customerPhone", {
-                  pattern: { value: /^[0-9]{10}$/, message: "Enter a valid 10 digit number" },
+                  pattern: { value: /^[0-9]{10}$/, message: "Invalid" },
                   onBlur: (e) => handlePhoneBlur(e.target.value)
                 })}
-                placeholder="9876543210"
-                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+                placeholder="Phone No."
+                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:border-[#0F4C3A] focus:ring-1 focus:ring-[#0F4C3A] outline-none"
               />
-              {isLookingUp && <span className="absolute right-3 top-2.5 text-xs text-gray-400">Looking up...</span>}
-              {customerFound && <span className="absolute right-3 top-2.5 text-xs text-green-600">✓ Found</span>}
+              {isLookingUp && <span className="absolute right-2 top-2.5 text-[10px] text-gray-400">...</span>}
+              {customerFound && <span className="absolute right-2 top-2.5 text-[10px] text-green-600 font-bold">✓</span>}
             </div>
-            {errors.customerPhone && <p className="text-red-500 text-xs mt-1">{errors.customerPhone.message}</p>}
+            {errors.customerPhone && <p className="text-red-500 text-[10px] mt-0.5">{errors.customerPhone.message}</p>}
           </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-gray-500">Patient name <span className="text-[#8A8678]">(optional)</span></label>
-            <input
-              {...register("customerName")}
-              placeholder="e.g. Ramesh Shah"
-              className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-            />
-          </div>
+          <input
+            {...register("customerName")}
+            placeholder="Patient Name"
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:border-[#0F4C3A] focus:ring-1 focus:ring-[#0F4C3A] outline-none"
+          />
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Doctor name <span className="text-gray-400">(optional)</span></label>
-          <input
-            {...register("doctorName")}
-            placeholder="e.g. Dr. Mehta"
-            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Discount %</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            {...register("discount", {
-              valueAsNumber: true,
-              min: { value: 0, message: "Cannot be negative" },
-              max: { value: 100, message: "Cannot exceed 100%" },
-            })}
-            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-          />
-        </div>
-      </div>
-
-      <div className="border border-gray-100 rounded-lg p-4 mb-4">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Items</h3>
-
-        {recentMedicines.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[10.5px] text-[#8A8678] mb-1.5 uppercase tracking-wide">Quick add</p>
-            <div className="flex flex-wrap gap-1.5">
-              {recentMedicines.map((med) => (
-                <button
-                  key={med.id}
-                  onClick={() => handleQuickAdd(med)}
-                  className="text-xs px-2.5 py-1 bg-[#F7F5F0] border border-[#E8E4D9] rounded-md hover:bg-green-50 hover:border-green-200 text-gray-700"
-                >
-                  {med.name}
-                </button>
-              ))}
-            </div>
+      {/* Barcode/Item Entry Area */}
+      <div className="bg-[#F7F5F0] border border-[#E8E4D9] rounded-lg p-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2" ref={wrapperRef}>
+          <div className="flex-1">
+            <MedicineAutocomplete key={autocompleteKey} onSelect={handleMedicineSelect} />
           </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-2 mb-2">
-          <MedicineAutocomplete key={autocompleteKey} onSelect={handleMedicineSelect} />
           
-          {pendingMedicine && pendingMedicine.unitsPerPack > 1 && (
-            <select
-              value={sellAsPackOf}
-              onChange={(e) => setSellAsPackOf(Number(e.target.value))}
-              className="w-full sm:w-36 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
+          <div className="flex gap-2">
+            {pendingMedicine && pendingMedicine.unitsPerPack > 1 && (
+              <select
+                value={sellAsPackOf}
+                onChange={(e) => setSellAsPackOf(Number(e.target.value))}
+                className="w-24 border border-gray-200 rounded-md px-2 py-2 text-sm bg-white outline-none focus:border-[#0F4C3A]"
+              >
+                <option value={pendingMedicine.unitsPerPack}>{pendingMedicine.packType}</option>
+                <option value={1}>Unit</option>
+              </select>
+            )}
+            
+            <div className="relative w-20">
+              <input
+                ref={qtyRef}
+                type="number"
+                min={1}
+                value={pendingQuantity}
+                onChange={(e) => setPendingQuantity(Number(e.target.value))}
+                onKeyDown={handleQtyKeyDown}
+                placeholder="Qty"
+                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#0F4C3A] pr-6"
+              />
+              <span className="absolute right-2 top-2.5 text-[10px] text-gray-400 font-medium tracking-tighter pointer-events-none">↵</span>
+            </div>
+            
+            <button
+              onClick={handleAddToList}
+              className="bg-[#0F4C3A] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0c3b2d] active:scale-95 transition-transform"
             >
-              <option value={1}>Per {getUnitLabel(pendingMedicine, 1)}</option>
-              <option value={pendingMedicine.unitsPerPack}>Per {pendingMedicine.packType}</option>
-            </select>
-          )}
-
-          <input
-            ref={qtyRef}
-            type="number"
-            min={1}
-            value={pendingQuantity}
-            onChange={(e) => setPendingQuantity(Number(e.target.value))}
-            onKeyDown={handleQtyKeyDown}
-            placeholder="Qty"
-            className="w-full sm:w-20 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-green-400"
-          />
-          <button
-            onClick={handleAddToList}
-            className="bg-[#0F4C3A] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0c3b2d] whitespace-nowrap"
-          >
-            Add
-          </button>
+              Add
+            </button>
+          </div>
         </div>
 
-        {/* --- CHANGED: Adjusts the hint prices based on the new math --- */}
         {pendingMedicine && (
-          <p className="text-xs text-green-700 mb-2">
-            {pendingMedicine.name} ·
+          <p className="text-[11px] text-[#0F4C3A] mt-2 font-medium">
+            {pendingMedicine.name} · 
             {pendingMedicine.unitsPerPack > 1 ? (
               sellAsPackOf === 1
-                ? ` ₹${(pendingMedicine.mrp / pendingMedicine.unitsPerPack || 0).toFixed(2)}/tablet · ${pendingMedicine.stock} tablets available`
-                : ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/strip · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} strips available`
+                ? ` ₹${(pendingMedicine.mrp / pendingMedicine.unitsPerPack || 0).toFixed(2)}/unit · ${pendingMedicine.stock} left`
+                : ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/${pendingMedicine.packType} · ${Math.floor(pendingMedicine.stock / pendingMedicine.unitsPerPack)} left`
             ) : (
-              ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/unit · ${pendingMedicine.stock} in stock`
+              ` ₹${(pendingMedicine.mrp || 0).toFixed(2)}/unit · ${pendingMedicine.stock} left`
             )}
-            {' · '}press Enter to add
           </p>
         )}
+        {medicineError && <p className="text-red-500 text-[11px] mt-1 font-medium">{medicineError}</p>}
+      </div>
 
-        {medicineError && <p className="text-red-500 text-xs mb-2">{medicineError}</p>}
-
-        {selectedMedicines.length === 0 ? (
-          <p className="text-sm text-gray-400">No items added yet</p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {selectedMedicines.map((med, index) => (
-              <div key={index} className="flex items-center justify-between bg-[#F7F5F0] px-3 py-2 rounded-md">
-                <span className="text-sm text-gray-900">{med.name}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-[#8A8678]">
-                    {med.sellAsPackOf > 1
-                      ? `${med.quantity / med.sellAsPackOf} ${med.unitLabel}s × ₹${((med.pricePerUnit * med.sellAsPackOf || 0)).toFixed(2)}`
-                      : `${med.quantity} ${med.unitLabel}s × ₹${(med.pricePerUnit || 0).toFixed(2)}`
-                    } = ₹{(med.lineTotal || 0).toFixed(2)}
-                  </span>
+      {/* Cart Dense Table */}
+      <div className="flex-1 border border-gray-200 rounded-lg overflow-hidden mb-4 flex flex-col">
+        <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 grid grid-cols-12 gap-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+          <div className="col-span-5">Item</div>
+          <div className="col-span-3 text-right">Qty</div>
+          <div className="col-span-3 text-right">Total</div>
+          <div className="col-span-1 text-center"></div>
+        </div>
+        
+        <div className="overflow-y-auto max-h-[30vh] min-h-[150px] p-1 bg-white">
+          {selectedMedicines.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-xs text-gray-400">Cart is empty</div>
+          ) : (
+            selectedMedicines.map((med, index) => (
+              <div key={index} className="grid grid-cols-12 gap-2 px-2 py-2 border-b border-gray-50 hover:bg-[#F7F5F0] items-center group">
+                <div className="col-span-5 text-sm font-medium text-gray-800 truncate" title={med.name}>
+                  {med.name}
+                  <div className="text-[10px] text-gray-400 font-normal">
+                    ₹{((med.pricePerUnit * med.sellAsPackOf) || 0).toFixed(2)} / {med.unitLabel}
+                  </div>
+                </div>
+                <div className="col-span-3 text-right text-sm text-gray-700">
+                  {med.quantity / med.sellAsPackOf}
+                </div>
+                <div className="col-span-3 text-right text-sm font-semibold text-gray-900">
+                  ₹{(med.lineTotal || 0).toFixed(2)}
+                </div>
+                <div className="col-span-1 text-center">
                   <button
                     onClick={() => setSelectedMedicines(selectedMedicines.filter((_, i) => i !== index))}
-                    className="text-red-400 hover:text-red-600 text-xs"
+                    className="text-gray-300 hover:text-red-500 focus:outline-none transition-colors"
                   >
                     ✕
                   </button>
                 </div>
               </div>
-            ))}
-            <div className="text-right text-xs text-[#8A8678] mt-1">
-              Subtotal: ₹{(subtotal || 0).toFixed(2)}
+            ))
+          )}
+        </div>
+        
+        <div className="bg-[#F7F5F0] border-t border-gray-200 p-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Discount %</label>
+            <input
+              type="number"
+              {...register("discount", { valueAsNumber: true, min: 0, max: 100 })}
+              className="w-14 border border-gray-300 rounded px-1.5 py-1 text-sm font-medium text-center focus:outline-none focus:border-[#0F4C3A]"
+            />
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-gray-500 line-through">₹{(subtotal || 0).toFixed(2)}</div>
+            <div className="text-lg font-bold text-[#0F4C3A]">
+              ₹{(subtotal * (1 - (register("discount").value || 10) / 100)).toFixed(2)}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       <button
         onClick={handleSubmit(onFormSubmit)}
-        className="bg-[#0F4C3A] hover:bg-[#0c3b2d] text-white text-sm font-medium px-6 py-2.5 rounded-md transition-colors w-full md:w-auto"
+        className="w-full bg-[#0F4C3A] hover:bg-[#0c3b2d] text-white text-sm font-semibold py-3.5 rounded-lg shadow-sm active:scale-[0.98] transition-all"
       >
-        {isWalkIn ? 'Save Cash Sale' : 'Save Prescription'}
+        {isWalkIn ? 'Complete Cash Sale (Enter)' : 'Save Delivery Order'}
       </button>
     </div>
   )

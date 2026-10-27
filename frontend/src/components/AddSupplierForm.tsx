@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useSupplierStore } from "../store/supplierStore";
+import { useToast } from "../components/toast";
 
 type SupplierFormData = {
   name: string;
@@ -13,6 +14,7 @@ type SupplierFormData = {
 
 const AddSupplierForm = () => {
   const addSupplier = useSupplierStore((state) => state.addSupplier);
+  const { error: toastError } = useToast();
 
   const {
     register,
@@ -35,7 +37,7 @@ const AddSupplierForm = () => {
         gstNumber: "",
       });
     } catch (err: any) {
-      alert(err.message || "Failed to add supplier");
+      toastError(err.message || "Failed to add supplier");
     }
   };
 

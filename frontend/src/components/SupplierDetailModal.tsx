@@ -4,6 +4,7 @@ import { Phone, Mail, MapPin, FileText } from "lucide-react"
 import type { Supplier } from "../types/supplier"
 import { useSupplierStore } from "../store/supplierStore"
 import { apiRequest } from "../services/api"
+import { useToast } from "../components/toast"
 
 interface SupplierDetailModalProps {
   supplier: Supplier
@@ -25,6 +26,7 @@ const SupplierDetailModal = ({ supplier, onClose, canEdit }: SupplierDetailModal
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const loadSuppliers = useSupplierStore((state) => state.loadSuppliers)
+  const { error: toastError } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<SupplierFormData>({
     defaultValues: {
@@ -49,7 +51,7 @@ const SupplierDetailModal = ({ supplier, onClose, canEdit }: SupplierDetailModal
       setIsEditing(false)
       onClose()
     } catch (err: any) {
-      alert(err.message || "Failed to update supplier")
+      toastError(err.message || "Failed to update supplier")
     } finally {
       setIsSaving(false)
     }
